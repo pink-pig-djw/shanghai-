@@ -1,0 +1,13 @@
+# Blender outputs (regenerate with blender/build_bund.py; the main .blend is ~90 MB)
+output/
+*.blend
+*.blend1
+*.blend@
+# Render scratch (final renders live in renders/*.jpg)
+renders/*.png
+renders/*.exr
+# Python / Node
+__pycache__/
+*.pyc
+node_modules/
+.venv/

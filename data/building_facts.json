@@ -1,0 +1,1996 @@
+{
+ "_meta": {
+  "generated": "2026-10-25",
+  "method": "WebSearch summaries only (direct page fetches were blocked); street sides and addresses for obscure buildings derived from local Overture/OSM data. Each fact is cited where a source was found; unsourced values are null or flagged C in notes.",
+  "confidence": {
+   "A": "directly stated by an authoritative or established source (Wikipedia, 澎湃/新民/文汇 newsroom, gov.cn, company or architect pages)",
+   "B": "derived, partially sourced, or from a single lower-tier source",
+   "C": "best guess or unverified identification; see notes"
+  },
+  "hex_note": "facade_hex / color_hex are approximate rendering colours: B when the colour word is sourced, otherwise C (from typical photographs).",
+  "extras_note": "Entries with osm_name == null are additional historic buildings in or next to the 外滩源 block that are not in the OSM name list."
+ },
+ "buildings": [
+  {
+   "osm_name": "银波大厦",
+   "local_xy": [
+    -198,
+    935
+   ],
+   "name_zh": "银波大厦",
+   "name_en": null,
+   "address": "Hongkou, east side of 吴淞路 near 福德路 (from map geometry; house number not found)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No web source found. Probably a modern office block (10 floors in OSM). local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "上海外滩茂悦大酒店",
+   "local_xy": [
+    100,
+    925
+   ],
+   "name_zh": "上海外滩茂悦大酒店",
+   "name_en": "Hyatt on the Bund",
+   "address": "黄浦路199号 (Hongkou, North Bund)",
+   "year": 2007,
+   "floors": 33,
+   "height_m": null,
+   "style": "modern hotel twin towers",
+   "facade_material": "glass curtain wall (C)",
+   "facade_color": "blue-grey glass (C)",
+   "facade_hex": "#7f939c",
+   "roof": "flat; top floors of the West Tower hold the VUE bar/restaurant",
+   "features": [
+    "two towers (East and West) joined by a low mezzanine/lobby podium",
+    "VUE bar on the top four floors of the West Tower",
+    "about 620-631 rooms"
+   ],
+   "confidence": "B",
+   "sources": [
+    "https://www.businesstraveller.com/tried-tested/hotel-check-hyatt-on-the-bund/",
+    "https://m.jiemian.com/article/11857525.html",
+    "https://guide.michelin.com/sg/zh_CN/hotels-stays/shanghai/hyatt-on-the-bund-10561",
+    "https://www.breakingtravelnews.com/news/article/btn20070524130121209/"
+   ],
+   "notes": "Opened 16 Nov 2007. Floor count is derived: a bar is cited on 32F and VUE occupies the top four floors of the West Tower, so the towers have at least 32 floors (33 commonly quoted, unverified). OSM's 4 floors is the podium; the towers are separate building parts."
+  },
+  {
+   "osm_name": "金山大楼",
+   "local_xy": [
+    -79,
+    885
+   ],
+   "name_zh": "金山大楼",
+   "name_en": null,
+   "address": "south of 大名路, west of 金山路 (Hongkou), beside the Astor House",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "V-shaped plan on the 金山路 corner"
+   ],
+   "confidence": "C",
+   "sources": [
+    "https://news.ifeng.com/c/8JJ0eyOwGIB"
+   ],
+   "notes": "A 凤凰网 article on Hongkou streets describes a V-shaped old building next to 金山路, one of the Astor House annexes, and says people came to call it by the street name (text truncated). This probably identifies 金山大楼; year and floors not found."
+  },
+  {
+   "osm_name": "原教会公寓",
+   "local_xy": [
+    -326,
+    680
+   ],
+   "name_zh": "原教会公寓",
+   "name_en": null,
+   "address": "south bank of Suzhou Creek, 南苏州路 near 圆明园路 (next to the former Union Church)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://gs.ctrip.com/html5/you/travels/2/3984382.html"
+   ],
+   "notes": "Listed only as one of the surviving historic buildings of 外滩源. Probably the Union Church's residential annex. Year, floors and style not found."
+  },
+  {
+   "osm_name": "原新天安堂",
+   "local_xy": [
+    -349,
+    680
+   ],
+   "name_zh": "新天安堂(原联合教堂)",
+   "name_en": "Union Church (former)",
+   "address": "南苏州路107号 (SmartShanghai; your note said 79号)",
+   "year": 1886,
+   "floors": null,
+   "height_m": 33,
+   "style": "Gothic Revival (W.M. Dowdall)",
+   "facade_material": "red and grey brick",
+   "facade_color": "red brick with grey brick bands",
+   "facade_hex": "#9a4b3c",
+   "roof": "steep pitched church roof with a central bell tower and spire",
+   "features": [
+    "central bell tower about 33 m high",
+    "spire removed after 1949 and replaced in the 2005 restoration",
+    "restored after a fire (2010 per Wikipedia, 2012 per SmartShanghai)"
+   ],
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Union_Church_(Shanghai)",
+    "https://www.smartshanghai.com/venue/14936/union_church_xin_tian_an_chang",
+    "https://www.thepaper.cn/newsDetail_forward_1284212"
+   ],
+   "notes": "Built 1885-86. height_m is the bell-tower height. OSM's 6 floors probably reflects the tower; the nave is a single tall storey."
+  },
+  {
+   "osm_name": "圆明园公寓",
+   "local_xy": [
+    -373,
+    485
+   ],
+   "name_zh": "圆明园公寓",
+   "name_en": "Yuanmingyuan Apartments",
+   "address": "圆明园路115号",
+   "year": 1904,
+   "floors": 4,
+   "height_m": null,
+   "style": "Queen Anne Revival (Algar & Co., 爱尔德洋行)",
+   "facade_material": "exposed red brick (清水砖) with carved brick and white rendered bands",
+   "facade_color": "red brick with white bands",
+   "facade_hex": "#a14a33",
+   "roof": "pitched (C)",
+   "features": [
+    "contrasting white render against exposed brick",
+    "carved brick ornament",
+    "brick-timber with partial RC frame"
+   ],
+   "confidence": "A",
+   "sources": [
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf",
+    "https://old.skyscraper.org/EXHIBITIONS/CHINA_PROPHECY/rockbund.php",
+    "https://english.shanghai.gov.cn/en-CityTour/20240108/60439c42c79c4265bb3418351a9da4e4.html"
+   ],
+   "notes": "新民晚报 gives the main body as 4 storeys; OSM says 6, which may include later rooftop additions (unverified)."
+  },
+  {
+   "osm_name": "安培洋行大楼",
+   "local_xy": [
+    -367,
+    453
+   ],
+   "name_zh": "安培洋行大楼",
+   "name_en": "Ampire & Co. Building (also called the Panama Legation building)",
+   "address": "圆明园路97号",
+   "year": 1907,
+   "floors": 4,
+   "height_m": null,
+   "style": "English classical / Queen Anne",
+   "facade_material": "ornate red brick",
+   "facade_color": "red brick",
+   "facade_hex": "#a5503a",
+   "roof": "pitched (C)",
+   "features": [
+    "tripartite facade with fine brickwork ornament",
+    "semicircular bay windows, vertical emphasis",
+    "central staircase inside"
+   ],
+   "confidence": "B",
+   "sources": [
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf",
+    "https://www.lonelyplanet.com/china/shanghai/attractions/yuanmingyuan-road/a/poi-sig/1537870/356068",
+    "https://www.frommers.com/destinations/shanghai/walking-tour-1",
+    "https://english.shanghai.gov.cn/en-CityTour/20240108/60439c42c79c4265bb3418351a9da4e4.html"
+   ],
+   "notes": "Year 1907 (新民晚报, Lonely Planet) or 1908 (Frommers, Rockbund list). Floors 4 is derived from a restaurant listed on '安培洋行3-4楼' in the local POI data; OSM says 3."
+  },
+  {
+   "osm_name": "益丰·外滩源",
+   "local_xy": [
+    -293,
+    394
+   ],
+   "name_zh": "益丰大楼(益丰洋行)",
+   "name_en": "Yi Feng Building / Yi Feng Galleria",
+   "address": "北京东路99号 (south side of 北京东路, behind Bund 27)",
+   "year": 1911,
+   "floors": 5,
+   "height_m": null,
+   "style": "Queen Anne Revival (Morrison & Gratton, designed 1906)",
+   "facade_material": "exposed red brick with light stone trim",
+   "facade_color": "red brick",
+   "facade_hex": "#9e4433",
+   "roof": "pitched with gables (C)",
+   "features": [
+    "about 123 m long east-west, called Shanghai's longest exposed red-brick building",
+    "brick-timber structure"
+   ],
+   "confidence": "B",
+   "sources": [
+    "https://gs.ctrip.com/html5/you/sight/shanghai2/144183.html",
+    "https://m.sohu.com/n/482484828/"
+   ],
+   "notes": "Facts come from a popular-architecture article; check before relying on them."
+  },
+  {
+   "osm_name": "滇北大楼",
+   "local_xy": [
+    -345,
+    345
+   ],
+   "name_zh": "滇北大楼",
+   "name_en": null,
+   "address": "east side of the southern extension of 圆明园路, between 北京东路 and 滇池路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "滇池大楼",
+   "local_xy": [
+    -351,
+    323
+   ],
+   "name_zh": "滇池大楼",
+   "name_en": null,
+   "address": "NE corner of 圆明园路 x 滇池路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://www.virtualshanghai.net/Data/Buildings?ID=513",
+    "https://www.virtualshanghai.net/Photos/Images?ID=1573",
+    "https://en.wikipedia.org/wiki/Gibb,_Livingston_%26_Co."
+   ],
+   "notes": "Possible identity (unverified): the former Gibb, Livingston & Co. building (仁记洋行), 滇池路100号, construction 1908. Virtual Shanghai files it under street 'Yuenmingyuen', which fits this corner."
+  },
+  {
+   "osm_name": "工联大厦",
+   "local_xy": [
+    -363,
+    204
+   ],
+   "name_zh": "工联大厦",
+   "name_en": null,
+   "address": "NE corner of 南京东路 x 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "新黄浦金融大厦",
+   "local_xy": [
+    -324,
+    148
+   ],
+   "name_zh": "新黄浦金融大厦",
+   "name_en": "New Huangpu Financial Plaza",
+   "address": "南京东路61号 (near 四川中路)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": "modern office tower (C)",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "B",
+   "sources": [
+    "https://www.smartshanghai.com/listings/business/offices/?page=7",
+    "https://www.smartshanghai.com/listings/business/offices/?page=5"
+   ],
+   "notes": "Address from a SmartShanghai office listing; OSM says 16 floors."
+  },
+  {
+   "osm_name": "嘉陵大楼",
+   "local_xy": [
+    -374,
+    135
+   ],
+   "name_zh": "嘉陵大楼",
+   "name_en": null,
+   "address": "SE corner of 南京东路 x 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found (OSM says 16 floors). local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "中国邮政储蓄银行上海分行",
+   "local_xy": [
+    -267,
+    99
+   ],
+   "name_zh": "中国邮政储蓄银行(黄浦区支行?)",
+   "name_en": null,
+   "address": "north side of 九江路, about 90 m west of the Bund; possibly 九江路36号",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://m.sh.bendibao.com/wangdian/zgyzcsyh/list4.htm"
+   ],
+   "notes": "The only PSBC branch on 九江路 in listings is the Huangpu sub-branch at 九江路36号; the Shanghai branch itself is at 东大名路1082号, so the OSM label may be inaccurate."
+  },
+  {
+   "osm_name": "上海医药工业有限公司",
+   "local_xy": [
+    -304,
+    92
+   ],
+   "name_zh": "上海医药工业有限公司(楼)",
+   "name_en": null,
+   "address": "north side of 九江路, east of 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "安利大楼",
+   "local_xy": [
+    -338,
+    70
+   ],
+   "name_zh": "安利大楼(原安利洋行)",
+   "name_en": "former Arnhold Brothers & Co. building",
+   "address": "四川中路320号, corner of 九江路 (east side of 四川中路, north of 九江路)",
+   "year": 1907,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://chinarhyming.com/?p=6399",
+    "https://atom.aim25.com/index.php/arnhold-and-company-limited-xx-arnhold-karberg-and-company-xx-arnhold-holdings-limited-4"
+   ],
+   "notes": "Identification via Paul French's blog (no.320 at the Sichuan/Jiujiang corner, 1907); a UK archive puts the Arnhold Building at 6 Kiukiang Road until 1930. OSM says 7 floors, which may mean later additions."
+  },
+  {
+   "osm_name": "上海医药工业有限公司",
+   "local_xy": [
+    -334,
+    32
+   ],
+   "name_zh": "上海医药工业有限公司(楼)",
+   "name_en": null,
+   "address": "SE corner of 九江路 x 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "东亚大楼",
+   "local_xy": [
+    -366,
+    11
+   ],
+   "name_zh": "东亚银行大楼",
+   "name_en": "Bank of East Asia Building",
+   "address": "四川中路299号 (SW corner of 九江路)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "houses the Shanghai and Hong Kong Museum of Banking History (opened 2018)"
+   ],
+   "confidence": "B",
+   "sources": [
+    "https://www.marketscreener.com/quote/stock/THE-BANK-OF-EAST-ASIA-LIM-1412619/news/Bank-of-East-Asia-BEA-China-Opens-the-Shanghai-and-Hong-Kong-Museum-of-Banking-History-27684054/",
+    "https://www.virtualshanghai.net/Data/Buildings?ID=533"
+   ],
+   "notes": "Year and architect not confirmed by search (1920s, often credited to Stewardson & Spence: unverified)."
+  },
+  {
+   "osm_name": "汉口路50号大楼",
+   "local_xy": [
+    -295,
+    -20
+   ],
+   "name_zh": "汉口路50号大楼",
+   "name_en": null,
+   "address": "汉口路50号 (north side, about 40 m east of 四川中路)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "联合大楼",
+   "local_xy": [
+    -355,
+    -27
+   ],
+   "name_zh": "联合大楼",
+   "name_en": null,
+   "address": "NW corner of 汉口路 x 四川中路 (west side of 四川中路; numbering puts it near 四川中路261号)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://www.jiemian.com/article/1813557.html",
+    "https://m.thepaper.cn/newsDetail_forward_1326449"
+   ],
+   "notes": "Possible identity (unverified): Hudec's Joint Savings Society (四行储蓄会) building, commonly given as 四川中路261号. A 澎湃 photo caption instead places the Joint Savings Society building at 广东路/四川中路, so treat this as unconfirmed."
+  },
+  {
+   "osm_name": "久事商务大厦",
+   "local_xy": [
+    -371,
+    -106
+   ],
+   "name_zh": "上海久事商务大厦",
+   "name_en": null,
+   "address": "四川中路213号 (from POI data)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No history found; large 5-storey footprint (OSM)."
+  },
+  {
+   "osm_name": "上海市政府参事室",
+   "local_xy": [
+    -286,
+    -120
+   ],
+   "name_zh": "(OSM label) 上海市政府参事室",
+   "name_en": null,
+   "address": "east side of 四川中路 between 汉口路 and 福州路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://www.chinanews.com.cn/gn/2011/03-18/2915830.shtml"
+   ],
+   "notes": "A 2011 report places the 参事室 office in a building beside the municipal government (人民大道), so the OSM label may be outdated. No building facts found."
+  },
+  {
+   "osm_name": "上海市机要通信局",
+   "local_xy": [
+    -249,
+    -155
+   ],
+   "name_zh": "上海市机要通信局",
+   "name_en": null,
+   "address": "north side of 福州路, about 50 m east of 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. OSM gives 2 floors for a 1036 m2 footprint; check against imagery."
+  },
+  {
+   "osm_name": "手表七厂办公楼",
+   "local_xy": [
+    -316,
+    -168
+   ],
+   "name_zh": "(原)上海手表七厂办公楼",
+   "name_en": null,
+   "address": "NW corner of 福州路 x 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "上海市生产服务合作联社等",
+   "local_xy": [
+    -193,
+    -191
+   ],
+   "name_zh": "上海市生产服务合作联社等",
+   "name_en": null,
+   "address": "south side of 福州路, about 60 m west of 中山东一路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "申达大楼",
+   "local_xy": [
+    -315,
+    -221
+   ],
+   "name_zh": "申达大楼(原中兴银行)",
+   "name_en": null,
+   "address": "福州路89号, SW corner of 福州路 x 四川中路",
+   "year": null,
+   "floors": 6,
+   "height_m": null,
+   "style": "modern with classical trim on doors, windows and eaves",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "L-shaped plan with a front block, rear block and link",
+    "curved wall on the street corner",
+    "listed 上海市优秀历史建筑; former office of 《文萃》 magazine"
+   ],
+   "confidence": "B",
+   "sources": [
+    "https://m.thepaper.cn/baijiahao_20621480"
+   ],
+   "notes": "Single source (a 澎湃号 account, publisher not identified); floors refers to the front block."
+  },
+  {
+   "osm_name": "元芳弄",
+   "local_xy": [
+    -226,
+    -227
+   ],
+   "name_zh": "元芳弄(建筑)",
+   "name_en": null,
+   "address": "元芳弄, lane east of 四川中路 between 福州路 and 广东路",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found; 3-storey lane buildings (OSM)."
+  },
+  {
+   "osm_name": "元芳弄",
+   "local_xy": [
+    -221,
+    -246
+   ],
+   "name_zh": "元芳弄(建筑)",
+   "name_en": null,
+   "address": "元芳弄 (north side of the lane)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found."
+  },
+  {
+   "osm_name": "元芳弄",
+   "local_xy": [
+    -242,
+    -246
+   ],
+   "name_zh": "元芳弄(建筑)",
+   "name_en": null,
+   "address": "元芳弄 (north side, near 四川中路)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found."
+  },
+  {
+   "osm_name": "上海市仓储行业协会",
+   "local_xy": [
+    -296,
+    -268
+   ],
+   "name_zh": "(possibly) 原卜内门洋行大楼",
+   "name_en": "(possibly) former Brunner Mond & Co. building",
+   "address": "west side of 四川中路; a POI at 四川中路133号 is 20 m away",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": "British neoclassical (horizontal tripartite), restrained Baroque decoration",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://m.winshang.com/news683373.html",
+    "https://www.thepaper.cn/newsDetail_forward_20876534"
+   ],
+   "notes": "If this is 四川中路133号: early-1920s, 7-storey RC, often credited to Stewardson & Spence (the 7-storey and architect details come from one unattributed search summary). OSM says 9 floors."
+  },
+  {
+   "osm_name": "上海外滩南京东路亚朵酒店",
+   "local_xy": [
+    -345,
+    -279
+   ],
+   "name_zh": "上海外滩南京东路亚朵酒店",
+   "name_en": null,
+   "address": "福州路105-1号 (from POI; mid-block between 福州路 and 广东路)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No building history found."
+  },
+  {
+   "osm_name": "元芳大楼",
+   "local_xy": [
+    -213,
+    -285
+   ],
+   "name_zh": "元芳大楼",
+   "name_en": null,
+   "address": "south of 元芳弄, about 50 m east of 四川中路 and 50 m north of 广东路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "上海电气集团总公司",
+   "local_xy": [
+    -247,
+    -296
+   ],
+   "name_zh": "上海电气集团(总部)",
+   "name_en": null,
+   "address": "四川中路110号 (east side, between 元芳弄 and 广东路)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "B",
+   "sources": [
+    "https://q.stock.sohu.com/cn/601727/gsjj.shtml",
+    "https://www.cnpp.cn/pinpai/7838.html"
+   ],
+   "notes": "Only the registered address was found; no building history."
+  },
+  {
+   "osm_name": "懿德大楼",
+   "local_xy": [
+    -274,
+    -340
+   ],
+   "name_zh": "懿德大楼",
+   "name_en": null,
+   "address": "NW corner of 广东路 x 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "锦江集团财务公司证券经营部",
+   "local_xy": [
+    -177,
+    -349
+   ],
+   "name_zh": "锦江集团财务公司证券经营部(楼)",
+   "name_en": null,
+   "address": "south side of 广东路 near the Bund (around 广东路51-59号)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "中国民生银行外滩支行",
+   "local_xy": [
+    -266,
+    -380
+   ],
+   "name_zh": "中国民生银行外滩支行",
+   "name_en": null,
+   "address": "SW corner of 广东路 x 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "上海长途电信科技发展公司",
+   "local_xy": [
+    -115,
+    -410
+   ],
+   "name_zh": "上海长途电信科技发展公司(楼)",
+   "name_en": null,
+   "address": "north of 延安东路, between the Bund and 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "高登金融大厦",
+   "local_xy": [
+    -147,
+    -415
+   ],
+   "name_zh": "高登金融大厦",
+   "name_en": null,
+   "address": "north side of 延安东路 near 四川中路; possibly 延安东路58号",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://www.smartshanghai.com/listings/business/offices/?page=9"
+   ],
+   "notes": "A SmartShanghai listing has an office building at 58 Yan'an Dong Lu near Sichuan Zhong Lu (name not shown in the snippet). OSM says 16 floors."
+  },
+  {
+   "osm_name": "联谊大厦",
+   "local_xy": [
+    -193,
+    -433
+   ],
+   "name_zh": "联谊大厦",
+   "name_en": "Union Friendship Tower",
+   "address": "延安东路 x 四川中路 NE corner (often given as 延安东路55号; the gov.cn page places 'No.100 East Yan'an Road' ambiguously)",
+   "year": 1985,
+   "floors": null,
+   "height_m": null,
+   "style": "modern high-rise",
+   "facade_material": "glass curtain wall (C)",
+   "facade_color": "dark tinted glass (C)",
+   "facade_hex": "#4f5f66",
+   "roof": "flat",
+   "features": [
+    "built Mar 1984 - May 1985",
+    "first building in Shanghai over 100 m tall",
+    "listed on Shanghai's 20th-century architectural heritage list (2024)"
+   ],
+   "confidence": "B",
+   "sources": [
+    "https://english.shanghai.gov.cn/en-CultureHeritage/20240529/3f7be93757a54039a017ee4bd3114db6.html",
+    "https://www.thepaper.cn/newsDetail_forward_20876534"
+   ],
+   "notes": "OSM's 3 floors / 1795 m2 is the podium only. The tower is over 100 m (A); 29 floors / 106.5 m are commonly quoted but unverified (C). 澎湃 describes a glass-curtain-wall high-rise at the NE corner of 延安东路 x 四川中路 completed 8 May 1985."
+  },
+  {
+   "osm_name": "创业大楼",
+   "local_xy": [
+    -245,
+    -445
+   ],
+   "name_zh": "创业大厦",
+   "name_en": null,
+   "address": "四川中路33号 (from POI data)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No building history found."
+  },
+  {
+   "osm_name": "凯石大厦",
+   "local_xy": [
+    -19,
+    -470
+   ],
+   "name_zh": "凯石大厦",
+   "name_en": null,
+   "address": "SW corner of 延安东路 x 中山东二路 (a POI at 中山东二路8号 is 5 m away)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "四川大楼",
+   "local_xy": [
+    -229,
+    -498
+   ],
+   "name_zh": "四川大楼",
+   "name_en": null,
+   "address": "NW corner of 延安东路 x 四川中路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. local Overture/OSM data (data/raw/segment.geojson + place.geojson): street side derived from geometry"
+  },
+  {
+   "osm_name": "金延大楼",
+   "local_xy": [
+    -7,
+    -500
+   ],
+   "name_zh": "金延大楼",
+   "name_en": null,
+   "address": "中山东二路, block between 延安东路 and 金陵东路 (west side)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [],
+   "notes": "No source found. The name suggests 金陵 + 延安 (the block between the two roads). The Shanghai Municipal Archives Bund branch (中山东二路9号) is about 40 m away."
+  },
+  {
+   "osm_name": "光明金融大厦",
+   "local_xy": [
+    34,
+    -554
+   ],
+   "name_zh": "光明金融大厦",
+   "name_en": "Guangming Finance Mansion",
+   "address": "金陵东路2号 (NW corner of 金陵东路 x 中山东二路)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "B",
+   "sources": [
+    "https://www.smartshanghai.com/venue/18510/guangming_finance_mansion_jinling_dong_lu"
+   ],
+   "notes": "Address from SmartShanghai (marked unverified)."
+  },
+  {
+   "osm_name": "东方饭店",
+   "local_xy": [
+    82,
+    -590
+   ],
+   "name_zh": "东方饭店 / 上海外滩东方商旅酒店",
+   "name_en": "Les Suites Orient, Bund Shanghai",
+   "address": "金陵东路1号 / 中山东二路12号 (SW corner of 金陵东路 x 中山东二路)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://www.cn.kayak.com/%E4%B8%8A%E6%B5%B7-%E9%85%92%E5%BA%97-%E4%B8%8A%E6%B5%B7%E5%A4%96%E6%BB%A9%E4%B8%9C%E6%96%B9%E5%95%86%E6%97%85%E9%85%92%E5%BA%97.204720.ksp"
+   ],
+   "notes": "Hotel address 金陵东路1号; local POIs list bars on 23F and 24F at 中山东二路12号, consistent with OSM's 28 floors. Identification is inferred."
+  },
+  {
+   "osm_name": "雷米洋行;利名洋行",
+   "local_xy": [
+    -59,
+    -598
+   ],
+   "name_zh": "(原)利名洋行 / 雷米洋行",
+   "name_en": "(former) Remi, Schmidt & Co. (Rémi's firm)",
+   "address": "NW corner of 金陵东路 x 永安路 (from map geometry)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://gs.ctrip.com/html5/you/travels/2/4052162.html",
+    "https://www.goodreads.com/author_blog_posts/8570551-many-of-us-have-passed-through-the-stretch-of-the-east-part-of-jinling-l"
+   ],
+   "notes": "雷米洋行 was the first French firm in Shanghai (Ctrip travelogue). The 3-4 storey arcade (qilou) buildings along east 金陵东路 date from 1912-1929 (Shanghai Daily text quoted on Goodreads). Year and floors for this building not found."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "亚洲文会大楼",
+   "name_en": "Royal Asiatic Society (North China Branch) Building, now Rockbund Art Museum",
+   "address": "虎丘路20号",
+   "year": 1932,
+   "floors": null,
+   "height_m": null,
+   "style": "Art Deco with Chinese traditional ornament",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "octagonal 'bagua' Art Deco windows on the front",
+    "restored by David Chipperfield Architects"
+   ],
+   "confidence": "A",
+   "sources": [
+    "https://www.rockbundartmuseum.org/about-us",
+    "https://www.lonelyplanet.com/china/shanghai/the-bund/attractions/rockbund-art-museum/a/poi-sig/1240624/1323851",
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf"
+   ],
+   "notes": "Extra 外滩源 building not in your OSM list. Floors not found."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "光陆大楼",
+   "name_en": "Capitol Building (Capitol Theatre)",
+   "address": "虎丘路146号 (142号 per SmartShanghai and Virtual Shanghai)",
+   "year": 1928,
+   "floors": null,
+   "height_m": null,
+   "style": "Art Deco (C.H. Gonda, 鸿达)",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "theatre + offices + apartments in one block; first Shanghai building with a cinema inside",
+    "opened 25 Feb 1928 (begun 1925)"
+   ],
+   "confidence": "A",
+   "sources": [
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf",
+    "https://www.smartshanghai.com/venue/34604/capitol_theatre_building",
+    "https://en.wikipedia.org/wiki/Capitol_Theatre,_Shanghai"
+   ],
+   "notes": "Extra 外滩源 building. Floors not found."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "广学大楼",
+   "name_en": "Christian Literature Society Building",
+   "address": "虎丘路128号",
+   "year": 1933,
+   "floors": 9,
+   "height_m": null,
+   "style": "Art Deco (L.E. Hudec, 邬达克)",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "9-storey steel-frame / concrete structure",
+    "facade ornamented with sharp, acute-angled vertical lines"
+   ],
+   "confidence": "A",
+   "sources": [
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf"
+   ],
+   "notes": "Extra 外滩源 building; built 1932, in use 1933."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "真光大楼",
+   "name_en": "True Light Building",
+   "address": "圆明园路209号",
+   "year": 1930,
+   "floors": 10,
+   "height_m": null,
+   "style": "Art Deco (L.E. Hudec)",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "10-storey reinforced concrete"
+   ],
+   "confidence": "A",
+   "sources": [
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf"
+   ],
+   "notes": "Extra 外滩源 building."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "女青年会大楼",
+   "name_en": "YWCA Building",
+   "address": "圆明园路133号",
+   "year": 1932,
+   "floors": 9,
+   "height_m": null,
+   "style": "Art Deco with Chinese traditional ornament (Poy Gum Lee, 李锦沛)",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "faces east",
+    "originally 8 floors, stepping back floor by floor above the 6th",
+    "one floor added in the late 1940s"
+   ],
+   "confidence": "A",
+   "sources": [
+    "https://img1.xinmin.cn/xmwb/2025-12-23/161223.pdf",
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf",
+    "https://m.thepaper.cn/newsDetail_forward_32727599"
+   ],
+   "notes": "Extra 外滩源 building. Built 1930-32 (one 新民晚报 article says completed 1933)."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "兰心大楼",
+   "name_en": "Lyceum Building",
+   "address": "圆明园路185号",
+   "year": 1927,
+   "floors": null,
+   "height_m": null,
+   "style": "neoclassical (Atkinson & Dallas, 通和洋行)",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [
+    "facade divided vertically into three parts",
+    "on the site of the original Lyceum Theatre"
+   ],
+   "confidence": "A",
+   "sources": [
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf",
+    "https://www.lonelyplanet.com/china/shanghai/attractions/yuanmingyuan-road/a/poi-sig/1537870/356068"
+   ],
+   "notes": "Extra 外滩源 building. Floors not found."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "协进大楼(传教士大楼)",
+   "name_en": "Missions Building",
+   "address": "圆明园路169号",
+   "year": 1924,
+   "floors": 6,
+   "height_m": null,
+   "style": "eclectic (Mission Architects Bureau)",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "A",
+   "sources": [
+    "https://touch.shio.gov.cn/jsp/jrsh_detail.jsp?id=74"
+   ],
+   "notes": "Extra 外滩源 building; nearing completion in June 1924 per the North China Daily News."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "哈密大楼",
+   "name_en": null,
+   "address": "圆明园路149号",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": "eclectic, three-part facade",
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "B",
+   "sources": [
+    "https://img1.xinmin.cn/xmwb/2022-01-25/240125.pdf"
+   ],
+   "notes": "Extra 外滩源 building. Year and floors not found."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "美丰洋行",
+   "name_en": "Meifeng Building",
+   "address": "北京东路100-114号, corner of 圆明园路",
+   "year": 1896,
+   "floors": 3,
+   "height_m": null,
+   "style": "Victorian veranda style",
+   "facade_material": "red brick in English bond",
+   "facade_color": "red brick",
+   "facade_hex": "#a14c37",
+   "roof": "three Baroque gables on the roof cornice",
+   "features": [
+    "continuous arcaded loggia along the 北京东路 (south) facade",
+    "restored with the street facades kept and a new structure inside; the text also describes a new taller volume stepping back at the 7th and 12th floors (check imagery)"
+   ],
+   "confidence": "A",
+   "sources": [
+    "https://dzb.whb.cn/imgPath/2022-08-17/120817.pdf",
+    "https://english.shanghai.gov.cn/en-CityTour/20240108/60439c42c79c4265bb3418351a9da4e4.html"
+   ],
+   "notes": "On the north side of 北京东路, at the edge of the 外滩源 block."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "上海划船俱乐部旧址",
+   "name_en": "former Shanghai Rowing Club",
+   "address": "南苏州路76号 (C)",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://gs.ctrip.com/html5/you/travels/2/4139269.html",
+    "https://gs.ctrip.com/html5/you/sight/shanghai2/143705.html"
+   ],
+   "notes": "Extra 外滩源 building, now a Western restaurant with a garden facing Lujiazui. Year and floors not found."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": "上海银行公会大楼",
+   "name_en": "Shanghai Bankers' Association Building",
+   "address": "香港路59号",
+   "year": 1920,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "B",
+   "sources": [
+    "https://www.virtualshanghai.net/Data/Buildings?ID=602",
+    "https://m.thepaper.cn/newsDetail_forward_2390780"
+   ],
+   "notes": "Virtual Shanghai gives construction 1920 (site found Sept 1917); some sources say 1925. Style and floors not found."
+  },
+  {
+   "osm_name": null,
+   "local_xy": null,
+   "name_zh": null,
+   "name_en": "Somekh Apartments; Andrews & George building; National Industrial Bank",
+   "address": null,
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "style": null,
+   "facade_material": null,
+   "facade_color": null,
+   "facade_hex": null,
+   "roof": null,
+   "features": [],
+   "confidence": "C",
+   "sources": [
+    "https://old.skyscraper.org/EXHIBITIONS/CHINA_PROPHECY/rockbund.php"
+   ],
+   "notes": "Named on the Skyscraper Museum's list of 12 protected Rockbund landmark buildings; addresses and facts not found."
+  }
+ ],
+ "landmarks": [
+  {
+   "key": "bund1_mcbain",
+   "year": 1916,
+   "floors": 8,
+   "height_m": null,
+   "front_facade": "Neo-classical block with Baroque detail on the Bund/Yan'an Rd corner. Two entrances, each framed by a pair of Ionic columns carrying a Baroque arched (broken) lintel; upper storeys carry two sets of paired Ionic columns, each pair spanning two floors. Built as 7 storeys, 8th storey added 1939.",
+   "columns": "2 entrances x 2 Ionic columns (ground floor); 2 sets of paired Ionic columns spanning two upper floors (exact floors not stated)",
+   "towers_domes": "none confirmed (one search summary claimed a Baroque kiosk on the NE corner, but that description belongs to No.3; treat as unverified)",
+   "material": "granite facing (light grey)",
+   "color_hex": "#cdc8bc",
+   "roof": "flat (top storey added 1939)",
+   "corrections": "floors 7 -> 8 (7 + 1939 addition). Keep height as an estimate (~35 m for 8 floors, C); no published metre figure found. Completion date given as 1913 or 1916 depending on source.",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Asia_Building",
+    "https://www.travelchina.org.cn/en/article/QSqESoQpysRh",
+    "https://m.thepaper.cn/baijiahao_16639070"
+   ]
+  },
+  {
+   "key": "bund2_shanghai_club",
+   "year": 1910,
+   "floors": 6,
+   "height_m": null,
+   "front_facade": "Classical tripartite facade (Baroque Revival detail). Rusticated ground floor with Tuscan entrance; floors 2-3 have a central five-bay colonnade of six giant Ionic columns spanning both floors; Baroque cupola turrets on the roof at the north and south ends.",
+   "columns": "6 Ionic, floors 2-3, centre (5 bays); Tuscan columns at the entrance",
+   "towers_domes": "2 symmetrical Baroque cupolas, one at each (north and south) end of the roofline",
+   "material": "stone facing, white/light grey",
+   "color_hex": "#e3e0d8",
+   "roof": "flat behind balustrade, with the two end cupolas",
+   "corrections": "floors 6 confirmed. Add the two end cupolas if missing. Opening given as 1910 or Jan 1911.",
+   "confidence": "A",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Shanghai_Club_Building",
+    "https://www.thepaper.cn/newsDetail_forward_14472887",
+    "https://simonfieldhouse.com/?p=7757"
+   ]
+  },
+  {
+   "key": "bund3_union",
+   "year": 1916,
+   "floors": 6,
+   "height_m": null,
+   "front_facade": "Symmetrical Neo-Renaissance facade with Baroque details (restored by Michael Graves, 2004). First steel-frame building in Shanghai (Palmer & Turner).",
+   "columns": null,
+   "towers_domes": "corner pavilion with a spherical dome on the north-east corner (Bund x Guangdong Rd)",
+   "material": "granite facing",
+   "color_hex": "#d2cbbd",
+   "roof": "flat with the domed corner kiosk",
+   "corrections": "floors 7 -> 6 (Wikipedia: six-storey; a Ctrip page says 7). Put the dome on the NE corner (Guangdong Rd side).",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Union_Building,_Shanghai",
+    "https://gs.ctrip.com/html5/you/sight/shanghai2/143781.html"
+   ]
+  },
+  {
+   "key": "bund5_nisshin",
+   "year": 1925,
+   "floors": 6,
+   "height_m": null,
+   "front_facade": "Three-part vertical composition: floors 1-2 base, floors 3-5 middle, top floor as the crown above a deep cornice between floors 5 and 6. Granite-faced reinforced-concrete frame; pediments and Ionic square pilasters; reliefs around the windows.",
+   "columns": "Ionic square pilasters on the middle section (count not stated)",
+   "towers_domes": null,
+   "material": "granite facing",
+   "color_hex": "#cbc5b8",
+   "roof": "flat (a small rooftop level holds a restaurant; not sourced)",
+   "corrections": "floors 7 -> 6 (Wikipedia).",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Nissin_Building",
+    "https://www.thepaper.cn/newsDetail_forward_2613556",
+    "https://m.ximalaya.com/sound/15095222"
+   ]
+  },
+  {
+   "key": "bund6_commercial_bank",
+   "year": 1907,
+   "floors": 4,
+   "height_m": null,
+   "front_facade": "The Bund's only Gothic Revival building: pointed-arch windows on the 4th floor, Gothic tracery windows on floors 1-2, small pinnacles on floors 3-4, five pointed gables in the roof storey (a cross used to stand on them). Described as a 'false four storeys' (4th floor in the roof).",
+   "columns": null,
+   "towers_domes": "no tower; five steep gables and small pinnacles along the roofline",
+   "material": "granite/stone facing per one source (colour not stated)",
+   "color_hex": "#d9d2c3",
+   "roof": "steep pitched roof with five gabled dormers",
+   "corrections": "year 1897 -> 1906-07 (1897 is when the bank was founded; the present building replaced a 3-storey building in 1906-07). Material: sources say stone/granite facing, not cream stucco.",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Imperial_Bank_of_China_Building",
+    "https://m.thepaper.cn/baijiahao_3884630",
+    "https://www.maigoo.com/citiao/276503.html"
+   ]
+  },
+  {
+   "key": "bund7_great_northern",
+   "year": 1908,
+   "floors": 5,
+   "height_m": null,
+   "front_facade": "French late-Renaissance style; classical columns on every floor; the lower two floors are stone-faced and the upper floors are granitic render (shuishuashi) painted white.",
+   "columns": "classical columns or pilasters on every floor (exact count not stated)",
+   "towers_domes": "black Rococo-style domed roofs at both ends of the top, contrasting with the white walls",
+   "material": "stone (floors 1-2) + white granitic render above",
+   "color_hex": "#ece9e2",
+   "roof": "flat centre with two black domes at the ends",
+   "corrections": "add the two black end domes. Floors: 5 per a Chinese source; Wikipedia's account of the 1905 fire mentions only a third floor plus attic, so the floor count is uncertain.",
+   "confidence": "B",
+   "sources": [
+    "https://m.thepaper.cn/baijiahao_16148691",
+    "https://en.wikipedia.org/wiki/Great_Northern_Telegraph_Building"
+   ]
+  },
+  {
+   "key": "bund9_china_merchants",
+   "year": 1901,
+   "floors": 3,
+   "height_m": null,
+   "front_facade": "Three-storey neoclassical brick building. East facade has open loggias on floors 2-3 (Tuscan and Corinthian columns) and a triangular pediment. The loggias were enclosed in the 1980s and reopened in the 2001 restoration, which also restored the red-brick facade.",
+   "columns": "loggia columns on floors 2-3: Tuscan + Corinthian (count not stated)",
+   "towers_domes": "central triangular pediment",
+   "material": "exposed red brick with stone trim",
+   "color_hex": "#9b4535",
+   "roof": "pitched roof behind the pediment",
+   "corrections": "floors 4 -> 3. Height ~19 m is plausible but unsourced.",
+   "confidence": "A",
+   "sources": [
+    "https://m.thepaper.cn/newsDetail_forward_10472621",
+    "https://m.thepaper.cn/baijiahao_16639070"
+   ]
+  },
+  {
+   "key": "bund12_hsbc",
+   "year": 1923,
+   "floors": 5,
+   "height_m": null,
+   "front_facade": "Neo-classical, symmetrical in three parts both ways. Rusticated granite base with three arched bronze entrance doors; central portico of giant columns spanning floors 2-4; a Greek-temple pediment forms the base of the central dome. Main body 5 floors (excluding mezzanine), centre 7 floors, 1 basement, steel frame.",
+   "columns": "centre, floors 2-4: sources disagree, either a Corinthian colonnade or 6 Ionic columns (2 of them paired)",
+   "towers_domes": "one central dome (copper-framed, modelled on the Pantheon), about 3 storeys tall above the 5th floor",
+   "material": "granite facing",
+   "color_hex": "#cfc8b8",
+   "roof": "flat roof with central dome",
+   "corrections": "your note (5 + mezzanine, centre 7) is right. Column order is disputed: keep paired giant columns in the centre and mark the capitals as uncertain. No metre height found.",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/HSBC_Building,_the_Bund",
+    "https://history.hsbc.com/collections/snapshots/housing-the-bank/a-shanghai-landmark",
+    "https://www.shobserver.cn/wx/detail.do?id=442102",
+    "https://zhongce.sina.com.cn/article/view/3087/",
+    "https://www.maigoo.com/citiao/261837.html"
+   ]
+  },
+  {
+   "key": "bund13_customs",
+   "year": 1927,
+   "floors": 8,
+   "height_m": 79.2,
+   "front_facade": "Greek-temple entrance portico with four Doric columns on the Bund; 8-storey east block topped by a stepped, three-stage four-faced clock tower; west block 5 floors; steel frame.",
+   "columns": "4 Doric, entrance portico, centre",
+   "towers_domes": "central clock tower, stepped inwards, four clock faces about 5.3 m across; 72 lamps",
+   "material": "granite facing",
+   "color_hex": "#cdc7ba",
+   "roof": "flat with central stepped clock tower",
+   "corrections": "height conflict: a Chinese encyclopedia site gives 120 ft main block + 140 ft tower = 260 ft (79.2 m); Wikipedia and LEGO give the tower as 11 storeys / 90-91 m (300 ft), which may include the flagstaff (C interpretation). Otherwise matches your data.",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Custom_House,_Shanghai",
+    "https://www.thepaper.cn/newsDetail_forward_5700079",
+    "https://www.maigoo.com/citiao/307679.html",
+    "https://www.smithofderby.com/?p=1875",
+    "https://www.lego.com/cdn/cs/set/assets/blta19610d09af64ba8/21039_LEGO_Shanghai_BI_WEB_UK_v2.pdf",
+    "https://xmwb.xinmin.cn/resfile/2012-02-05/B13/B13.pdf"
+   ]
+  },
+  {
+   "key": "bund14_bank_of_communications",
+   "year": 1948,
+   "floors": 6,
+   "height_m": null,
+   "front_facade": "Art Deco (designed 1937 by C.H. Gonda, finished Oct 1948): strong vertical lines, axial symmetry, centre raised two extra storeys as a tower. Ground floor and entrance faced in black marble; upper walls grey-white render.",
+   "columns": null,
+   "towers_domes": "central 2-storey raised tower block (8 floors at the centre)",
+   "material": "grey-white cement render above a black-marble base",
+   "color_hex": "#c9c6bf",
+   "roof": "flat, stepped up at the centre",
+   "corrections": "material granite -> grey-white render with black marble base (a 澎湃 article contrasts its 'grey-white cement walls' with its granite neighbours). Floors: 6 + 2-storey central tower (one English source says 'eight-storey').",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Bank_of_Communications_Building",
+    "https://www.thepaper.cn/newsDetail_forward_16367281",
+    "https://simonfieldhouse.com/?p=7790",
+    "https://www.lonelyplanet.com/china/shanghai/attractions/bank-of-communications-building/a/poi-sig/1538070/356068"
+   ]
+  },
+  {
+   "key": "bund15_russo_chinese",
+   "year": 1902,
+   "floors": 3,
+   "height_m": null,
+   "front_facade": "Italian Renaissance revival (Heinrich Becker with Richard Seel), brick and concrete, three storeys; opened 26 Oct 1902.",
+   "columns": null,
+   "towers_domes": null,
+   "material": "not found (white render/stone in photos, C)",
+   "color_hex": "#e6e1d6",
+   "roof": "flat behind balustrade (C)",
+   "corrections": "none needed for floors or year. No source found for facade material.",
+   "confidence": "A",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Russo-Chinese_Bank_Building",
+    "https://img1.xinmin.cn/xmzk/2022-02-14/310214.pdf"
+   ]
+  },
+  {
+   "key": "bund15b_annex",
+   "year": null,
+   "floors": null,
+   "height_m": null,
+   "front_facade": "No source found for the building OSM calls 外滩公共服务中心. It may be a modern infill building rather than a 1902 structure (unverified).",
+   "columns": null,
+   "towers_domes": null,
+   "material": null,
+   "color_hex": null,
+   "roof": null,
+   "corrections": "year 1902 is unsupported; check photos before modelling it as historic.",
+   "confidence": "C",
+   "sources": []
+  },
+  {
+   "key": "bund16_bank_of_taiwan",
+   "year": 1924,
+   "floors": 4,
+   "height_m": null,
+   "front_facade": "Western/Japanese mixed classicism; the front has four giant columns like a small Parthenon. Layout recorded as ground-floor banking hall, two office floors, and a top floor for staff housing and meetings.",
+   "columns": "4 giant columns, centre (order not stated; Greek-temple look)",
+   "towers_domes": null,
+   "material": "stone/granite (C)",
+   "color_hex": "#cfc9bd",
+   "roof": "flat (C)",
+   "corrections": "floors 5 -> 4 (derived from the 1927-28 layout description, B). Year 1927 -> 1924 per Wikipedia (one Japanese page says 1926).",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Bank_of_Taiwan_Building",
+    "https://4travel.jp/os_shisetsu/10476556",
+    "https://vcea.huma-num.fr/Digital_Library/Images_en.php?ID=15121"
+   ]
+  },
+  {
+   "key": "bund17_ncdn",
+   "year": 1924,
+   "floors": 10,
+   "height_m": 40.2,
+   "front_facade": "Neo-classical / neo-Renaissance with Baroque elements (Lester, Johnson & Morriss). Total height 40.2 m with 11 levels including the mezzanine and the roof towers; tallest building on the Bund in the mid-1920s. Atlas-type figures at the top level appear to hold up the roof; two goddess statues that flanked the marble entrance were destroyed in the Cultural Revolution.",
+   "columns": "neoclassical columns (count not stated)",
+   "towers_domes": "Baroque towers at roof level (positions not stated in sources; photos suggest the two ends of the Bund front, C)",
+   "material": "granite facing",
+   "color_hex": "#cbc4b6",
+   "roof": "flat with small Baroque towers",
+   "corrections": "floors 8 -> 10 (11 levels incl. mezzanine and towers); height 40 -> 40.2 m (A).",
+   "confidence": "B",
+   "sources": [
+    "https://www.thepaper.cn/newsDetail_forward_16367281",
+    "https://en.wikipedia.org/wiki/North_China_Daily_News_Building",
+    "https://www.lonelyplanet.com/china/shanghai/the-bund/attractions/north-china-daily-news-building/a/poi-sig/1538069/1323851",
+    "https://simonfieldhouse.com/?p=7800"
+   ]
+  },
+  {
+   "key": "bund18_chartered",
+   "year": 1923,
+   "floors": 5,
+   "height_m": null,
+   "front_facade": "Neoclassical, three horizontal parts. Rusticated granite ground floor; floors 2-4 plain wall with two giant Ionic columns through all three floors; projecting cornice above floor 4; 5th-floor windows separated by small square pilasters.",
+   "columns": "2 Ionic, floors 2-4, centre",
+   "towers_domes": null,
+   "material": "granite facing",
+   "color_hex": "#cfc9bc",
+   "roof": "flat",
+   "corrections": "floors 6 -> 5. Built 1922-23.",
+   "confidence": "B",
+   "sources": [
+    "https://m.thepaper.cn/baijiahao_16900417",
+    "https://xmwb.xinmin.cn/resfile/2014-01-05/A15/A15.pdf"
+   ]
+  },
+  {
+   "key": "bund19_palace",
+   "year": 1908,
+   "floors": 6,
+   "height_m": null,
+   "front_facade": "Edwardian / Queen Anne style (Walter Scott), six storeys; one of the few colourful Bund buildings with a red-and-white exterior (red brick with white stone bands and dressings); Victorian ornament; rooftop garden terrace.",
+   "columns": null,
+   "towers_domes": "originally cupolas/turrets on the roofline; one source says the fancy roofline burned out after WWI, so today's rooftop pavilions should be checked against photos",
+   "material": "red brick + white stone bands",
+   "color_hex": "#a4473a",
+   "roof": "flat roof terrace (roof garden)",
+   "corrections": "material 'brick_red_banded' confirmed. Rooftop cupolas existed historically; the current state is unverified.",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Peace_Hotel",
+    "https://www.swatch-art-peace-hotel.com/history",
+    "https://www.swatch-art-peace-hotel.com/sites/default/files/files/module/file-box/2021-04-factsheet-swatch-art-peace-hotel-en.pdf",
+    "https://courses.bowdoin.edu/asian-studies-2071-fall-2019/visual-analysis-3/the-palace-hotel/",
+    "https://www.jiemian.com/article/10632537.html"
+   ]
+  },
+  {
+   "key": "bund20_sassoon",
+   "year": 1929,
+   "floors": 10,
+   "height_m": 77.0,
+   "front_facade": "Art Deco (Chicago-school influence), A-shaped plan with three street fronts and the main entrance on Nanjing Rd. 10 storeys, rising to 13 in the east tower.",
+   "columns": null,
+   "towers_domes": "dark-green copper-clad pyramid on top of the EAST (Bund-end) tower; height about 19 m (China News / Sina) or about 10 m (one English page)",
+   "material": "stone facing (granite per common descriptions, not directly confirmed)",
+   "color_hex": "#c4b9a3",
+   "roof": "flat, with a pyramidal copper roof over the east tower (pyramid colour about #3f6152)",
+   "corrections": "position the pyramid over the Bund-end (east) tower. One source counts 12 usable floors, another 10 / partly 13.",
+   "confidence": "A",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Peace_Hotel",
+    "https://www.thepaper.cn/newsDetail_forward_26059709",
+    "https://www.chinanews.com/sh/2023/04-06/9985476.shtml",
+    "https://finance.sina.cn/2024-02-15/detail-inaiavcp9973002.d.html",
+    "https://simonfieldhouse.com/?p=7811"
+   ]
+  },
+  {
+   "key": "bund23_boc",
+   "year": 1937,
+   "floors": 15,
+   "height_m": 69.2,
+   "front_facade": "Chinese-style Art Deco tower (Palmer & Turner with Lu Qianshou), the Bund's only major building designed with a Chinese architect. Base and enclosing wall in Suzhou granite. Final design 15 floors / 227 ft, cut down from an 18-floor scheme (Lonely Planet says 33 floors, Wikipedia 34) so that it would not outrank Sassoon House.",
+   "columns": null,
+   "towers_domes": "stepped central tower capped by a low Chinese-style pyramidal hipped roof (roof form and tile colour not confirmed by a source; photos suggest green glazed tile, C)",
+   "material": "Suzhou (Jinshan) granite",
+   "color_hex": "#c7b48c",
+   "roof": "low pyramidal hipped roof with Chinese eaves (C)",
+   "corrections": "height conflict: 227 ft (69.2 m) per the Bank of China history page vs 'one foot lower than Sassoon House' (about 76.7 m) per Wikipedia. The difference may be the roof.",
+   "confidence": "A",
+   "sources": [
+    "https://www.boc.cn/en/aboutboc/ab7/200809/t20080926_1601875.html",
+    "https://en.wikipedia.org/wiki/Bank_of_China_Building,_Shanghai",
+    "https://www.lonelyplanet.com/points-of-interest/bank-of-china-building/1085422",
+    "https://www.penang-traveltips.com/china/shanghai/old-bank-of-china-building.htm"
+   ]
+  },
+  {
+   "key": "bund24_yokohama",
+   "year": 1924,
+   "floors": 7,
+   "height_m": null,
+   "front_facade": "Neoclassical with Art Nouveau touches (Palmer & Turner, 1923-24).",
+   "columns": null,
+   "towers_domes": null,
+   "material": "stone/granite (C)",
+   "color_hex": "#cfc9bd",
+   "roof": "flat (C)",
+   "corrections": "floors 6 -> 7 (Wikipedia: seven-story). No source found for the column arrangement.",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Yokohama_Specie_Bank_Building",
+    "https://www.lonelyplanet.com/points-of-interest/yokohama-specie-bank/1538051",
+    "https://www.hpcbristol.sjtu.edu.cn/visual/BS-s08"
+   ]
+  },
+  {
+   "key": "bund26_yangtze",
+   "year": 1920,
+   "floors": 7,
+   "height_m": null,
+   "front_facade": "Floors 1-2 rough-hewn granite, floors 3-5 jointed ashlar, paired Ionic columns in the middle of floor 6, mansard roof on top.",
+   "columns": "paired Ionic columns, 6th floor, centre",
+   "towers_domes": null,
+   "material": "granite (rusticated below, ashlar above)",
+   "color_hex": "#c9c3b6",
+   "roof": "mansard roof (dark)",
+   "corrections": "floors 7 confirmed by Wikipedia; facade layering comes from a single derivative web page (B/C).",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Yangtze_Insurance_Building",
+    "https://simonfieldhouse.com/?p=7823"
+   ]
+  },
+  {
+   "key": "bund27_jardine",
+   "year": 1922,
+   "floors": 7,
+   "height_m": null,
+   "front_facade": "English Renaissance style; reinforced-concrete frame clad in granite; floors 1-2 rough-cut (rusticated); floors 3-5 have four marble Corinthian columns in the centre with balconies and stone balustrades between them; carved ram's heads on the 2nd floor.",
+   "columns": "4 Corinthian, floors 3-5, centre",
+   "towers_domes": null,
+   "material": "granite (rusticated base)",
+   "color_hex": "#cdc6b8",
+   "roof": "flat; top storeys are later additions",
+   "corrections": "floors 6 -> 7 (Wikipedia: 5 storeys, +1 in 1930, +1 in 1983; 澎湃 says 6 + 2 added in 1983 = 8). Architect credited to either Moorhead & Halse or Stewardson & Spence.",
+   "confidence": "A",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Jardine_Matheson_Building",
+    "https://www.thepaper.cn/newsDetail_forward_2491964_1"
+   ]
+  },
+  {
+   "key": "bund28_glen_line",
+   "year": 1922,
+   "floors": 7,
+   "height_m": null,
+   "front_facade": "'Free' Renaissance style (G.L. Wilson of Palmer & Turner). Granite facade on the lower two levels; central entrance on the Bund through a portico with two granite columns on each side.",
+   "columns": "2 + 2 granite columns flanking the central entrance portico",
+   "towers_domes": "a tower above the roofline (originally the Glen Line manager's flat)",
+   "material": "granite (lower two levels), stone above",
+   "color_hex": "#cfc8ba",
+   "roof": "flat with rooftop tower",
+   "corrections": "floors 7 confirmed; add the rooftop tower.",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Glen_Line_Building",
+    "https://simonfieldhouse.com/?p=7830",
+    "https://www.lonelyplanet.com/china/shanghai/the-bund/attractions/glen-line-steamship-co/a/poi-sig/1538050/1323851"
+   ]
+  },
+  {
+   "key": "bund29_indochine",
+   "year": 1914,
+   "floors": 3,
+   "height_m": 21.6,
+   "front_facade": "Neoclassical with French Baroque decoration (Atkinson & Dallas, designed 1912). East facade in three parts both ways; the central three bays have two Ionic columns through floors 2-3; the 2nd-floor middle bay is a modified Palladian motif. Ground-floor entrance: two Tuscan columns carrying entablature and frieze, a niche-like arch, and a broken scroll pediment above.",
+   "columns": "2 Ionic, floors 2-3, centre; 2 Tuscan at the entrance",
+   "towers_domes": "none (Baroque broken pediment over the door)",
+   "material": "granite facing on the east facade and the east bays of the N/S facades",
+   "color_hex": "#d0cabd",
+   "roof": "flat (C)",
+   "corrections": "none; your figures match.",
+   "confidence": "A",
+   "sources": [
+    "https://m.thepaper.cn/baijiahao_16639070",
+    "https://zhongce.sina.com.cn/article/view/3087/",
+    "https://en.wikipedia.org/wiki/Banque_de_l%27Indochine_Building,_Shanghai"
+   ]
+  },
+  {
+   "key": "bund32_peninsula",
+   "year": 2009,
+   "floors": 15,
+   "height_m": null,
+   "front_facade": "Modern take on the Bund's 1920s-30s Art Deco. Granite facade with bronze mullions, grilles and panels; setbacks from the 10th floor with planted terraces facing the Bund. Adjacent 13-storey (HOK) or 14-storey (HSH annual report) residential block.",
+   "columns": null,
+   "towers_domes": null,
+   "material": "granite + bronze details",
+   "color_hex": "#c9b99c",
+   "roof": "flat, stepped setbacks from the 10th floor",
+   "corrections": "none; the 62 m height is still an estimate (no published metre figure found).",
+   "confidence": "A",
+   "sources": [
+    "https://hok.com/projects/view/the-peninsula-shanghai",
+    "https://www.hkexnews.hk/listedco/listconews/sehk/2008/0414/00045_317186/E110.pdf",
+    "https://www.multihousingnews.com/first-new-building-on-shanghais-bund-in-70-years-tops-out/"
+   ]
+  },
+  {
+   "key": "bund33_consulate",
+   "year": 1873,
+   "floors": 2,
+   "height_m": null,
+   "front_facade": "English Renaissance colonial veranda building (rebuilt 1872-73 after an 1870 fire; Grossman & Boyce). East front: five-arch arcade in the centre of the ground floor and verandas on both floors; brick-and-timber; partial attic at the NW corner. Originally exposed brick, now cement-rendered.",
+   "columns": "arcade piers (5 arches, ground floor centre)",
+   "towers_domes": null,
+   "material": "cement render (originally exposed brick)",
+   "color_hex": "#e4d9c3",
+   "roof": "hipped roof covered with small Chinese grey tiles",
+   "corrections": "none; rebuild finished 1872 or 1873 depending on source.",
+   "confidence": "A",
+   "sources": [
+    "https://m.thepaper.cn/newsDetail_forward_32353806",
+    "https://img1.xinmin.cn/xmzk/2023-11-27/461127.pdf",
+    "https://gs.ctrip.com/html5/you/sight/shanghai2/143705.html",
+    "https://en.wikipedia.org/wiki/Former_Consulate-General_of_the_United_Kingdom,_Shanghai"
+   ]
+  },
+  {
+   "key": "broadway_mansions",
+   "year": 1934,
+   "floors": 19,
+   "height_m": 78.0,
+   "front_facade": "Art Deco / early modern brick tower (B. Flazer, Palmer & Turner). Steps back floor by floor from the 11th storey, giving a symmetrical '山'-shaped silhouette.",
+   "columns": null,
+   "towers_domes": "stepped central tower (no dome)",
+   "material": "brick (brown in photos; not confirmed by a source)",
+   "color_hex": "#6f4c3c",
+   "roof": "flat stepped terraces",
+   "corrections": "floors: 19 (Wikipedia) vs 22 (Virtual Shanghai, Maigoo). Height 78 m (78.33 m per Maigoo). Model setbacks from the 11th floor.",
+   "confidence": "A",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Broadway_Mansions",
+    "https://m.thepaper.cn/newsDetail_forward_34218091",
+    "https://www.virtualshanghai.net/Data/Buildings?ID=1689",
+    "https://www.maigoo.com/top/419254.html"
+   ]
+  },
+  {
+   "key": "astor_house",
+   "year": 1910,
+   "floors": 6,
+   "height_m": null,
+   "front_facade": "Neo-classical 'Victorian Baroque' (1907-10 rebuild). Large arched openings at the 5th-floor windows, Ionic columns between floors 3-4, and string courses above the 5th floor dividing the front into three zones; semicircular corner. The pavilion dome on the corner tower has been lost.",
+   "columns": "Ionic, floors 3-4 (count not stated)",
+   "towers_domes": "corner tower whose domed pavilion no longer exists",
+   "material": "not found",
+   "color_hex": null,
+   "roof": "flat (C)",
+   "corrections": "floors 6 confirmed (Wikipedia). Facade details come from a travel blog (C). Reopened 16 Jan 1911.",
+   "confidence": "B",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Astor_House_Hotel_(Shanghai)",
+    "https://gs.ctrip.com/html5/you/travels/2/3952503.html",
+    "https://m.gmw.cn/baijia/2021-03/30/34725259.html"
+   ]
+  },
+  {
+   "key": "russian_consulate",
+   "year": 1914,
+   "floors": 4,
+   "height_m": null,
+   "front_facade": "German vernacular + Baroque (Hans Emil Lieb). Four storeys plus an attic; a hexagonal pavilion on top overlooks the river.",
+   "columns": null,
+   "towers_domes": "hexagonal rooftop pavilion",
+   "material": "not found",
+   "color_hex": null,
+   "roof": "pitched roof with attic storey and hexagonal pavilion",
+   "corrections": "add the attic storey and hexagonal pavilion. Completed July 1914 (新民周刊) vs 1916 (travel sites); consulate moved in Jan 1917.",
+   "confidence": "B",
+   "sources": [
+    "https://img1.xinmin.cn/xmzk/2022-02-14/310214.pdf",
+    "https://bh.trip.com/moments/poi-garden-bridge-82870"
+   ]
+  },
+  {
+   "key": "gutzlaff_tower",
+   "year": 1907,
+   "floors": null,
+   "height_m": 36.8,
+   "front_facade": "Slender signal tower (Modesto Marti de Sola, 1907) with red-and-white horizontal stripes: red brick bands, and white tile cladding applied in the 1999 reconstruction.",
+   "columns": null,
+   "towers_domes": "the tower itself; focal height 49.8 m",
+   "material": "red brick + white bands",
+   "color_hex": "#a7483a",
+   "roof": "signal mast on top",
+   "corrections": "moved 22.4 m in 1993 (Wikipedia; Lonely Planet says 1995), reconstructed 1999. Stripes are red/white.",
+   "confidence": "A",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Gutzlaff_Signal_Tower",
+    "https://m.gmw.cn/2026-10/18/content_1304576711.htm",
+    "https://www.lonelyplanet.com/china/shanghai/the-bund/attractions/gutzlaff-signal-tower/a/poi-sig/1411346/1323851",
+    "https://theculturetrip.com/asia/china/articles/a-walking-tour-of-the-bund-shanghai",
+    "https://chinarhyming.com/?p=19296"
+   ]
+  },
+  {
+   "key": "heroes_monument",
+   "year": 1994,
+   "floors": 0,
+   "height_m": 24.0,
+   "front_facade": "Three stylised rifle-like shafts leaning together, in Huangpu Park.",
+   "columns": null,
+   "towers_domes": null,
+   "material": "concrete (Wikipedia)",
+   "color_hex": "#d8d5cd",
+   "roof": null,
+   "corrections": "year: completed 27 May 1994 (begun 1988) per Huangpu sources; Wikipedia says 1993.",
+   "confidence": "A",
+   "sources": [
+    "https://en.wikipedia.org/wiki/Shanghai_People%27s_Heroes_Memorial_Tower",
+    "https://www.shobserver.cn/sgh/detail?id=4015345",
+    "https://gs.ctrip.com/html5/you/sight/shanghai2/25378.html"
+   ]
+  }
+ ],
+ "road": {
+  "zhongshan_e1_lanes": 4,
+  "zhongshan_e1_lanes_note": "After the 2010 renovation the surface road in front of the Bund was cut from 11 lanes to 4 (China Daily), with about 70% of traffic moved into the two-level Bund Tunnel (6 lanes, 3 per direction, one direction per level; opened 28 Mar 2010). Xinhua's wording ('cut off four of the 11 lanes') would imply 7, so 4 is the most likely value but not certain. A 2008 plan spoke of reducing 10 lanes to 4.",
+  "median": null,
+  "median_note": "No source found for a central median or its form; check aerial imagery.",
+  "sources": [
+   "https://covid-19.chinadaily.com.cn/china/2010-03/28/content_9653113.htm",
+   "https://covid-19.chinadaily.com.cn/china/2010-03/29/content_9653410.htm",
+   "https://en.wikipedia.org/wiki/Bund_Tunnel",
+   "https://en.wikipedia.org/wiki/The_Bund",
+   "https://www.nbbj.com/work/shanghai-bund",
+   "https://www.pps.org/article/road-diet-parks-planned-for-the-bund-in-shanghai"
+  ]
+ }
+}

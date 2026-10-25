@@ -1,0 +1,511 @@
+{
+ "_comment": "Historic Bund landmarks. 'match' selects the OSM/Overture footprint (by primary name, optionally limited by a local-metre box [xmin,ymin,xmax,ymax]). 'floors'/'height' override OSM values. 'confidence': A = sourced figure, B = derived from sourced floor count / partial data, C = estimated from photos & proportions. Sources are listed in README.md.",
+ "landmarks": [
+  {
+   "key": "bund1_mcbain",
+   "no": "1",
+   "zh": "亚细亚大楼",
+   "en": "McBain Building (Asiatic Petroleum)",
+   "year": 1916,
+   "match": {
+    "name": "中国太平洋保险公司"
+   },
+   "floors": 8,
+   "height": 35.0,
+   "confidence": "B",
+   "style": "baroque",
+   "material": "granite_light",
+   "note": "7 floors + one storey added in 1939"
+  },
+  {
+   "key": "bund2_shanghai_club",
+   "no": "2",
+   "zh": "东风饭店/上海总会",
+   "en": "Shanghai Club (Waldorf Astoria)",
+   "year": 1910,
+   "match": {
+    "name": "华尔道夫酒店"
+   },
+   "floors": 6,
+   "height": 31.0,
+   "confidence": "C",
+   "style": "english_baroque",
+   "material": "granite_white"
+  },
+  {
+   "key": "bund3_union",
+   "no": "3",
+   "zh": "有利大楼",
+   "en": "Union Building (Three on the Bund)",
+   "year": 1916,
+   "match": {
+    "name": "有利大楼"
+   },
+   "floors": 6,
+   "height": 30.0,
+   "confidence": "B",
+   "style": "renaissance",
+   "material": "granite_light",
+   "note": "6 floors (Wikipedia); domed corner pavilion on the NE corner (Bund x Guangdong Rd)"
+  },
+  {
+   "key": "bund5_nisshin",
+   "no": "5",
+   "zh": "日清大楼",
+   "en": "Nisshin Kisen Kaisha Building",
+   "year": 1925,
+   "match": {
+    "name": "外滩五号"
+   },
+   "floors": 6,
+   "height": 27.0,
+   "confidence": "B",
+   "style": "eclectic",
+   "material": "granite_warm"
+  },
+  {
+   "key": "bund6_commercial_bank",
+   "no": "6",
+   "zh": "中国通商银行大楼",
+   "en": "Commercial Bank of China",
+   "year": 1907,
+   "match": {
+    "name": "外滩六号"
+   },
+   "floors": 4,
+   "height": 24.0,
+   "confidence": "B",
+   "style": "gothic",
+   "material": "stucco_cream",
+   "note": "rebuilt 1906-07, Gothic, five gables in the roof storey"
+  },
+  {
+   "key": "bund7_great_northern",
+   "no": "7",
+   "zh": "大北电报公司大楼",
+   "en": "Great Northern Telegraph Building (Bangkok Bank)",
+   "year": 1908,
+   "match": {
+    "name": "盘谷银行"
+   },
+   "floors": 5,
+   "height": 26.0,
+   "confidence": "B",
+   "style": "french_renaissance",
+   "material": "stucco_white",
+   "note": "white render above a stone base, two black domes at the ends"
+  },
+  {
+   "key": "bund9_china_merchants",
+   "no": "9",
+   "zh": "轮船招商局大楼",
+   "en": "China Merchants Steam Navigation Co.",
+   "year": 1901,
+   "match": {
+    "name": "轮船招商局大楼"
+   },
+   "floors": 3,
+   "height": 17.0,
+   "confidence": "A",
+   "style": "brick_classical",
+   "material": "brick_red"
+  },
+  {
+   "key": "bund12_hsbc",
+   "no": "12",
+   "zh": "汇丰银行大楼",
+   "en": "HSBC Building",
+   "year": 1923,
+   "match": {
+    "name": "上海浦东发展银行"
+   },
+   "floors": 5,
+   "height": 31.0,
+   "confidence": "B",
+   "note": "main body 5 floors (+mezzanine), central part 7 floors, Pantheon-like dome",
+   "style": "neoclassical_dome",
+   "material": "granite_light"
+  },
+  {
+   "key": "bund13_customs",
+   "no": "13",
+   "zh": "江海关大楼",
+   "en": "Custom House",
+   "year": 1927,
+   "match": {
+    "name": "上海海关"
+   },
+   "merge_radius": 16,
+   "floors": 8,
+   "height": 38.0,
+   "tower_top": 79.2,
+   "confidence": "B",
+   "note": "east block 8 floors, west 5; four Doric columns; tower 79.2 m (one source) vs 90-91 m (Wikipedia, LEGO; may include the flagpole)",
+   "style": "customs",
+   "material": "granite_light"
+  },
+  {
+   "key": "bund14_bank_of_communications",
+   "no": "14",
+   "zh": "交通银行大楼",
+   "en": "Bank of Communications",
+   "year": 1948,
+   "match": {
+    "name": "上海市总工会"
+   },
+   "floors": 6,
+   "height": 30.0,
+   "confidence": "B",
+   "style": "artdeco",
+   "material": "granite_light",
+   "note": "grey-white render over a black-marble base, two-storey raised centre (8 floors)"
+  },
+  {
+   "key": "bund15_russo_chinese",
+   "no": "15",
+   "zh": "华俄道胜银行大楼",
+   "en": "Russo-Chinese Bank",
+   "year": 1902,
+   "match": {
+    "name": "上海外汇交易中心"
+   },
+   "floors": 3,
+   "height": 21.5,
+   "confidence": "C",
+   "style": "italian_renaissance",
+   "material": "stucco_white"
+  },
+  {
+   "key": "bund15b_annex",
+   "no": "15",
+   "zh": "外滩公共服务中心",
+   "en": "Bund public service centre",
+   "year": 1902,
+   "match": {
+    "name": "外滩公共服务中心"
+   },
+   "floors": 4,
+   "height": 20.0,
+   "confidence": "C",
+   "style": "generic_historic",
+   "material": "stucco_white"
+  },
+  {
+   "key": "bund16_bank_of_taiwan",
+   "no": "16",
+   "zh": "台湾银行大楼",
+   "en": "Bank of Taiwan",
+   "year": 1927,
+   "match": {
+    "name": "招商银行",
+    "box": [
+     -230,
+     85,
+     -150,
+     125
+    ]
+   },
+   "floors": 4,
+   "height": 24.0,
+   "confidence": "B",
+   "style": "greek_temple",
+   "material": "granite_light",
+   "note": "4 giant columns in the centre"
+  },
+  {
+   "key": "bund17_ncdn",
+   "no": "17",
+   "zh": "字林西报大楼",
+   "en": "North China Daily News Building (AIA)",
+   "year": 1924,
+   "match": {
+    "name": "友邦大厦"
+   },
+   "floors": 9,
+   "height": 40.2,
+   "confidence": "B",
+   "style": "ncdn",
+   "material": "granite_light",
+   "note": "40.2 m, 11 levels incl. mezzanine and roof towers"
+  },
+  {
+   "key": "bund18_chartered",
+   "no": "18",
+   "zh": "麦加利银行大楼",
+   "en": "Chartered Bank Building",
+   "year": 1923,
+   "match": {
+    "name": "外滩18号"
+   },
+   "floors": 5,
+   "height": 28.0,
+   "confidence": "B",
+   "style": "neoclassical_loggia",
+   "material": "granite_light",
+   "note": "2 Ionic columns, floors 2-4, centre"
+  },
+  {
+   "key": "bund19_palace",
+   "no": "19",
+   "zh": "汇中饭店",
+   "en": "Palace Hotel (Peace Hotel South)",
+   "year": 1908,
+   "match": {
+    "name": "和平饭店南楼"
+   },
+   "floors": 6,
+   "height": 30.0,
+   "confidence": "C",
+   "style": "palace_hotel",
+   "material": "brick_red_banded"
+  },
+  {
+   "key": "bund20_sassoon",
+   "no": "20",
+   "zh": "沙逊大厦",
+   "en": "Sassoon House (Fairmont Peace Hotel)",
+   "year": 1929,
+   "match": {
+    "name": "和平饭店",
+    "box": [
+     -300,
+     210,
+     -190,
+     275
+    ]
+   },
+   "floors": 10,
+   "height": 77.0,
+   "confidence": "A",
+   "note": "77 m incl. ~19 m green copper pyramid; 10 floors, 13 at the tower",
+   "style": "sassoon",
+   "material": "granite_warm"
+  },
+  {
+   "key": "bund23_boc",
+   "no": "23",
+   "zh": "中国银行大楼",
+   "en": "Bank of China Building",
+   "year": 1937,
+   "match": {
+    "name": "中国银行大楼"
+   },
+   "floors": 15,
+   "height": 69.2,
+   "confidence": "A",
+   "note": "final design 15 floors / 227 ft = 69.2 m (Bank of China); Wikipedia quotes ~76.7 m",
+   "style": "boc",
+   "material": "granite_golden"
+  },
+  {
+   "key": "bund24_yokohama",
+   "no": "24",
+   "zh": "横滨正金银行大楼",
+   "en": "Yokohama Specie Bank",
+   "year": 1924,
+   "match": {
+    "name": "中国工商银行",
+    "box": [
+     -280,
+     300,
+     -190,
+     335
+    ]
+   },
+   "floors": 7,
+   "height": 32.0,
+   "confidence": "B",
+   "style": "neoclassical_columns",
+   "material": "granite_light"
+  },
+  {
+   "key": "bund26_yangtze",
+   "no": "26",
+   "zh": "扬子大楼",
+   "en": "Yangtsze Insurance Building",
+   "year": 1920,
+   "match": {
+    "name": "中国农业银行",
+    "box": [
+     -240,
+     320,
+     -180,
+     350
+    ]
+   },
+   "floors": 7,
+   "height": 32.0,
+   "confidence": "B",
+   "style": "renaissance",
+   "material": "granite_light",
+   "note": "paired Ionic columns on the 6th floor, mansard roof"
+  },
+  {
+   "key": "bund27_jardine",
+   "no": "27",
+   "zh": "怡和洋行大楼",
+   "en": "Jardine Matheson Building",
+   "year": 1922,
+   "match": {
+    "name": "罗斯福/外滩27"
+   },
+   "floors": 7,
+   "height": 32.0,
+   "confidence": "A",
+   "style": "neoclassical_columns",
+   "material": "granite_light",
+   "note": "4 Corinthian columns, floors 3-5"
+  },
+  {
+   "key": "bund28_glen_line",
+   "no": "28",
+   "zh": "格林邮船大楼",
+   "en": "Glen Line Building",
+   "year": 1922,
+   "match": {
+    "name": "上海清算所"
+   },
+   "floors": 7,
+   "height": 32.0,
+   "confidence": "B",
+   "style": "renaissance",
+   "material": "granite_light",
+   "note": "rooftop tower, entrance portico with 2+2 granite columns"
+  },
+  {
+   "key": "bund29_indochine",
+   "no": "29",
+   "zh": "东方汇理银行大楼",
+   "en": "Banque de l'Indochine",
+   "year": 1914,
+   "match": {
+    "name": "中国光大银行"
+   },
+   "floors": 3,
+   "height": 21.6,
+   "confidence": "A",
+   "style": "french_baroque",
+   "material": "granite_light"
+  },
+  {
+   "key": "bund32_peninsula",
+   "no": "32",
+   "zh": "半岛酒店",
+   "en": "The Peninsula Shanghai",
+   "year": 2009,
+   "match": {
+    "point": [
+     -212,
+     500
+    ]
+   },
+   "floors": 15,
+   "height": 62.0,
+   "confidence": "B",
+   "note": "15-storey hotel, setbacks from the 10th floor (HOK); adjacent 13/14-storey residences",
+   "style": "peninsula",
+   "material": "granite_warm"
+  },
+  {
+   "key": "bund33_consulate",
+   "no": "33",
+   "zh": "原英国领事馆",
+   "en": "Former British Consulate",
+   "year": 1873,
+   "match": {
+    "point": [
+     -300,
+     590
+    ]
+   },
+   "floors": 2,
+   "height": 13.0,
+   "confidence": "C",
+   "style": "consulate",
+   "material": "stucco_cream"
+  },
+  {
+   "key": "broadway_mansions",
+   "no": "-",
+   "zh": "上海大厦",
+   "en": "Broadway Mansions",
+   "year": 1934,
+   "match": {
+    "name": "上海大厦"
+   },
+   "floors": 19,
+   "height": 78.0,
+   "confidence": "A",
+   "style": "broadway",
+   "material": "brick_brown",
+   "note": "19 floors (Wikipedia; 22 in other sources), steps back from the 11th floor, roof 78 m"
+  },
+  {
+   "key": "astor_house",
+   "no": "-",
+   "zh": "浦江饭店",
+   "en": "Astor House Hotel",
+   "year": 1910,
+   "match": {
+    "name": "浦江饭店"
+   },
+   "floors": 6,
+   "height": 27.0,
+   "confidence": "C",
+   "style": "astor",
+   "material": "brick_grey"
+  },
+  {
+   "key": "russian_consulate",
+   "no": "-",
+   "zh": "俄罗斯驻沪总领事馆",
+   "en": "Russian Consulate",
+   "year": 1914,
+   "match": {
+    "name": "俄罗斯领事馆"
+   },
+   "floors": 4,
+   "height": 20.0,
+   "confidence": "B",
+   "style": "russian_consulate",
+   "material": "stucco_grey",
+   "note": "4 storeys + attic, hexagonal rooftop pavilion"
+  },
+  {
+   "key": "gutzlaff_tower",
+   "no": "-",
+   "zh": "外滩信号台",
+   "en": "Gutzlaff Signal Tower",
+   "year": 1907,
+   "match": {
+    "name": "外滩史陈列室"
+   },
+   "floors": 2,
+   "height": 36.8,
+   "confidence": "A",
+   "note": "36.8 m tower, focal height 49.8 m (Wikipedia)",
+   "style": "signal_tower",
+   "material": "brick_red_banded"
+  },
+  {
+   "key": "heroes_monument",
+   "no": "-",
+   "zh": "上海市人民英雄纪念塔",
+   "en": "People's Heroes Memorial Tower",
+   "year": 1994,
+   "match": {
+    "point": [
+     -48,
+     590
+    ],
+    "all_within": 12
+   },
+   "floors": 0,
+   "height": 24.0,
+   "confidence": "A",
+   "note": "24 m, three leaning rifle-like shafts (Wikipedia)",
+   "style": "monument",
+   "material": "concrete_light"
+  }
+ ]
+}

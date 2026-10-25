@@ -1,0 +1,10 @@
+# Data preparation (tools/*.py)
+pyarrow>=26.0
+shapely>=2.2
+pyproj>=3.8
+numpy>=2.5
+
+# Blender build / web export (blender/*.py) — the bpy wheel is Blender as a Python module
+# (needs Python 3.13). Alternatively run the scripts inside Blender 5.2:
+#   blender -b --python blender/build_bund.py -- --out output/shanghai_bund.blend
+bpy==5.2.3

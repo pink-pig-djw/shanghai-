@@ -1,0 +1,123 @@
+<meta charset="utf-8">
+<title>外滩漫游</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&display=swap">
+<style>
+/* Layout: a full-bleed 3D canvas; the HUD floats in the four corners like brass plaques on a 1930s Bund facade. */
+:root {
+  --ink: #f3ede1;          /* granite cream text */
+  --ink-dim: #c9bfae;
+  --glass: rgba(18, 24, 26, 0.72);
+  --glass-strong: rgba(14, 19, 21, 0.9);
+  --line: rgba(222, 206, 170, 0.28);
+  --patina: #6fb59a;       /* Sassoon House copper roof */
+  --brass: #d8b46a;
+  --warn: #e8935a;
+  --bg: #0e1416;
+  --f-display: "Limelight", "Noto Serif SC", Georgia, serif;
+  --f-cn-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --f-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0; }
+#view { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+.panel { background: var(--glass); border: 1px solid var(--line); border-radius: 6px; backdrop-filter: blur(6px); }
+.label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+
+/* start / loading screen */
+#intro { position: fixed; inset: 0; display: grid; place-items: center; z-index: 20;
+  background: radial-gradient(120% 90% at 50% 20%, rgba(40, 58, 60, 0.55), rgba(8, 11, 12, 0.92)); }
+#intro .card { width: min(560px, calc(100% - 32px)); padding: 28px 28px 24px; display: grid; gap: 18px; }
+#intro h1 { margin: 0; font-family: var(--f-cn-display); font-weight: 900; font-size: clamp(40px, 9vw, 64px); line-height: 1; letter-spacing: 0.08em; text-wrap: balance; }
+#intro h1 small { display: block; margin-top: 10px; font-family: var(--f-display); font-weight: 400; font-size: clamp(16px, 3.6vw, 22px); letter-spacing: 0.22em; color: var(--brass); }
+#intro p { margin: 0; line-height: 1.7; color: var(--ink-dim); max-width: 60ch; }
+.keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 18px; font-size: 13px; }
+.keys div { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+kbd { font-family: var(--f-body); font-size: 12px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: rgba(255,255,255,0.05); white-space: nowrap; }
+#progress { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+#progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--patina), var(--brass)); transition: width 0.25s; }
+#status { font-size: 12px; color: var(--ink-dim); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+#start { justify-self: start; font: 600 16px var(--f-body); letter-spacing: 0.12em; color: var(--bg); background: var(--brass);
+  border: 0; border-radius: 4px; padding: 10px 22px; cursor: pointer; }
+#start:disabled { opacity: 0.4; cursor: progress; }
+#start:focus-visible, .tp button:focus-visible, .hud-btn:focus-visible { outline: 2px solid var(--patina); outline-offset: 2px; }
+.credit { font-size: 11px; color: var(--ink-dim); opacity: 0.8; }
+
+/* HUD */
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+#hud[hidden] { display: none !important; }
+#cross { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; opacity: 0.7; }
+#cross::before, #cross::after { content: ""; position: absolute; background: var(--ink); }
+#cross::before { left: 6px; top: 0; width: 2px; height: 14px; }
+#cross::after { top: 6px; left: 0; height: 2px; width: 14px; }
+#place { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); padding: 10px 14px; max-width: min(380px, 70vw); display: grid; gap: 2px; }
+#place .zh { font-family: var(--f-cn-display); font-size: 18px; font-weight: 600; }
+#place .meta { font-size: 12px; color: var(--ink-dim); }
+#ferry { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); padding: 10px 14px; width: 230px; display: grid; gap: 4px; }
+#ferry .state { font-size: 15px; font-weight: 500; }
+#ferry .state b { color: var(--patina); font-weight: 600; }
+#prompt { position: absolute; left: 50%; bottom: calc(22% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 10px 16px; font-size: 15px; white-space: nowrap; }
+#map { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding: 6px; pointer-events: auto; }
+#map canvas { display: block; width: 210px; height: 210px; border-radius: 4px; }
+#map.big canvas { width: min(70vh, 80vw); height: min(70vh, 80vw); }
+.tp { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding: 10px; display: grid; gap: 6px; pointer-events: auto; max-width: min(300px, 60vw); }
+.tp[hidden] { display: none !important; }
+.tp button { font: 13px var(--f-body); text-align: left; color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 5px 8px; cursor: pointer; }
+.tp button:hover { border-color: var(--line); background: rgba(255,255,255,0.05); }
+.hud-btns { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; pointer-events: auto; }
+.hud-btn { font: 13px var(--f-body); color: var(--ink); background: var(--glass); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+#touch { position: absolute; inset: 0; pointer-events: auto; display: none; }
+#stick { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255,255,255,0.04); display: none; }
+#stick i { position: absolute; left: 40px; top: 40px; width: 40px; height: 40px; border-radius: 50%; background: rgba(243,237,225,0.35); }
+@media (pointer: coarse) { #touch { display: block; } #cross { display: none; } }
+@media (max-width: 560px) { #ferry { width: 180px; } #map canvas { width: 150px; height: 150px; } }
+@media (prefers-reduced-motion: reduce) { #progress i { transition: none; } }
+</style>
+
+<canvas id="view" aria-label="外滩第一人称三维场景"></canvas>
+
+<section id="intro" aria-live="polite">
+  <div class="card panel">
+    <h1>外滩漫游<small>THE BUND · SHANGHAI</small></h1>
+    <p>从中山东一路到外白渡桥，按 OpenStreetMap 真实底图逐栋重建的外滩。沿着防汛墙观景平台散步，走到金陵东路渡口坐东金线轮渡，过江去陆家嘴。</p>
+    <div class="keys" aria-label="操作说明">
+      <div><kbd>W A S D</kbd><span>走路</span></div>
+      <div><kbd>鼠标</kbd><span>转动视角</span></div>
+      <div><kbd>Shift</kbd><span>小跑</span></div>
+      <div><kbd>E</kbd><span>上船 / 下船</span></div>
+      <div><kbd>T</kbd><span>传送到景点</span></div>
+      <div><kbd>M</kbd><span>放大地图</span></div>
+      <div><kbd>F</kbd><span>飞行模式</span></div>
+      <div><kbd>Esc</kbd><span>暂停</span></div>
+    </div>
+    <div id="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+    <div id="status">正在载入场景…</div>
+    <button id="start" type="button" disabled>进入外滩</button>
+    <div class="credit">地图数据 © OpenStreetMap contributors（ODbL），经 Overture Maps 提供。建筑立面为依据公开资料的重建。</div>
+  </div>
+</section>
+
+<div id="hud" hidden>
+  <div id="cross"></div>
+  <div id="place" class="panel"><span class="label">附近</span><span class="zh" id="place-name">外滩</span><span class="meta" id="place-meta">中山东一路</span></div>
+  <div id="ferry" class="panel"><span class="label">东金线轮渡</span><span class="state" id="ferry-state">—</span><span class="meta" id="ferry-meta" style="font-size:12px;color:var(--ink-dim)">金陵东路渡口 ⇄ 东昌路渡口</span></div>
+  <div id="prompt" class="panel" hidden></div>
+  <div id="map" class="panel" title="M 放大 / 缩小"><canvas id="map-c" width="420" height="420" aria-label="小地图"></canvas></div>
+  <div class="hud-btns" id="hud-btns"><button class="hud-btn" id="btn-tp" type="button">传送 T</button><button class="hud-btn" id="btn-e" type="button" hidden>上船 E</button></div>
+  <div class="tp panel" id="tp" hidden></div>
+  <div id="touch"><div id="stick"><i></i></div></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
+  "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.9.16/build/index.module.js"
+} }
+</script>
+<script type="module" src="./app.js"></script>
