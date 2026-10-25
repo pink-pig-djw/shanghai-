@@ -333,6 +333,18 @@ function materialFor(name) {
   if (!matCache.has(name)) matCache.set(name, makeMaterial(name));
   return matCache.get(name);
 }
+// the surrounding city is kilometres away and half hidden by haze: Lambert shading
+// with the same colour texture, no normal maps, no shadows
+const cheapCache = new Map();
+function cheapMaterialFor(name) {
+  if (!cheapCache.has(name)) {
+    const m = materialFor(name);
+    const c = new THREE.MeshLambertMaterial({ map: m.map || null, color: m.map ? 0xffffff : m.color });
+    c.name = name + '_far';
+    cheapCache.set(name, c);
+  }
+  return cheapCache.get(name);
+}
 
 // ---------------------------------------------------------------------------
 // loading
@@ -362,20 +374,29 @@ async function fetchBuffer(url, onProgress) {
 // app
 // ---------------------------------------------------------------------------
 const canvas = $('view');
-// "#low" (or a phone) = no shadows, lower resolution, no far context ring
+// "#low" (or a phone) = no shadows, lower resolution, no far context ring; "#stats" = frame stats
 const LOW = location.hash === '#low' || matchMedia('(pointer: coarse)').matches;
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LOW, powerPreference: 'high-performance' });
-renderer.setPixelRatio(LOW ? Math.min(window.devicePixelRatio, 0.85) : Math.min(window.devicePixelRatio, 1.5));
+const STATS = location.hash === '#stats';
+// MSAA is costly on high-DPI screens, where the extra pixels already smooth edges
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LOW && window.devicePixelRatio <= 1.25,
+  powerPreference: 'high-performance' });
+// adaptive resolution: the pixel ratio moves between DPR_MIN and DPR_MAX to hold the frame rate
+const DPR_MAX = LOW ? Math.min(window.devicePixelRatio, 0.85) : Math.min(window.devicePixelRatio, 1.5);
+const DPR_MIN = LOW ? 0.5 : 0.6;
+let dpr = DPR_MAX;
+renderer.setPixelRatio(dpr);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.AgXToneMapping ?? THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.82;
 renderer.shadowMap.enabled = !LOW;
 renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.autoUpdate = false;          // re-rendered only when the player has moved (see frame)
 MAX_ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.15, 9000);
+// the fog hides everything beyond ~6 km, so a nearer far plane costs nothing visible
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.15, 6500);
 scene.fog = new THREE.FogExp2(0xc4c8c8, 0.00032);
 
 // sky + sun
@@ -390,18 +411,24 @@ sky.material.uniforms.rayleigh.value = 1.6;
 sky.material.uniforms.mieCoefficient.value = 0.005;
 sky.material.uniforms.mieDirectionalG.value = 0.8;
 sky.material.uniforms.sunPosition.value.copy(sunDir);
-scene.add(sky);
 const sun = new THREE.DirectionalLight(0xffd8aa, 3.0);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -120, right: 120, top: 120, bottom: -120, near: 1, far: 900 });
+// wide enough that the cached shadow map still covers the view after a few metres of walking
+Object.assign(sun.shadow.camera, { left: -150, right: 150, top: 150, bottom: -150, near: 1, far: 900 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
 scene.add(new THREE.HemisphereLight(0xb4c8e0, 0x5e594c, 0.55));
 {
+  // the sky never changes: render the atmosphere shader once into a cube map
+  // (background) and a prefiltered environment, instead of every frame
+  const skyScene = new THREE.Scene(); skyScene.add(sky);
+  const cubeRT = new THREE.WebGLCubeRenderTarget(LOW ? 256 : 512, { type: THREE.HalfFloatType });
+  new THREE.CubeCamera(1, 30000, cubeRT).update(renderer, skyScene);
+  scene.background = cubeRT.texture;
   const pm = new THREE.PMREMGenerator(renderer);
-  const env = new THREE.Scene(); const s2 = sky.clone(); env.add(s2);
-  scene.environment = pm.fromScene(env, 0, 0.1, 30000).texture;
+  scene.environment = pm.fromScene(skyScene, 0, 0.1, 30000).texture;
+  pm.dispose();
 }
 
 let world = null;
@@ -433,16 +460,20 @@ async function load() {
     } catch (e) { console.warn('skip', key, e); base += sizes[i]; continue; }
     base += sizes[i];
     const gltf = await loader.parseAsync(buf, '');
+    const far = key === 'context';
     gltf.scene.traverse((o) => {
+      o.matrixAutoUpdate = false;     // static city: compute matrices once, not every frame
+      o.updateMatrix();
       if (!o.isMesh) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
-      const repl = mats.map((m) => materialFor(m.name || ''));
+      const repl = mats.map((m) => (far ? cheapMaterialFor(m.name || '') : materialFor(m.name || '')));
       o.material = Array.isArray(o.material) ? repl : repl[0];
-      o.castShadow = key !== 'ground' && key !== 'context';
-      o.receiveShadow = true;
+      o.castShadow = key !== 'ground' && !far;
+      o.receiveShadow = !far;
       if (WALKABLE.has(key)) { o.geometry.computeBoundsTree(); walkMeshes.push(o); }
     });
     scene.add(gltf.scene);
+    gltf.scene.updateMatrixWorld(true);
     done.set(key, gltf.scene);
   }
   status('生成水面、树木、路灯与轮渡…');
@@ -550,7 +581,10 @@ function buildTrees() {
       p.copy(B(t[0], t[1], t[2])); q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t[5]); s.setScalar(t[4]);
       m4.compose(p, q, s); trunkM.setMatrixAt(i, m4); crownM.setMatrixAt(i, m4);
     });
-    for (const m of [trunkM, crownM]) { m.castShadow = true; m.receiveShadow = true; scene.add(m); }
+    for (const m of [trunkM, crownM]) {
+      m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix();
+      m.computeBoundingSphere(); scene.add(m);
+    }
   }
 }
 
@@ -964,13 +998,56 @@ $('start').addEventListener('click', () => {
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.needsUpdate = true;
 });
 
 // ---------------------------------------------------------------------------
 // loop
 // ---------------------------------------------------------------------------
-let lastT = performance.now(), hudT = 0;
+let lastT = performance.now(), hudT = 0, mapT = 0, shadowT = 0;
 const TIME_SCALE = location.hash === '#fastferry' ? 25 : 1;   // debug: speed up the ferry
+const shadowAt = new THREE.Vector3(1e9, 0, 0);
+// frame-time statistics for the adaptive resolution (and the #stats overlay)
+const perf = { t: 0, n: 0, fps: 60 };
+let statsEl = null;
+if (STATS) {
+  statsEl = document.createElement('div');
+  Object.assign(statsEl.style, { position: 'fixed', left: '8px', top: '8px', zIndex: 50, font: '12px monospace',
+    color: '#f3ede1', background: 'rgba(0,0,0,0.55)', padding: '4px 6px', pointerEvents: 'none' });
+  document.body.appendChild(statsEl);
+}
+function adaptResolution(dt) {
+  perf.t += dt; perf.n++;
+  if (perf.t < 1.5) return;
+  perf.fps = perf.n / perf.t; perf.t = 0; perf.n = 0;
+  let next = dpr;
+  if (perf.fps < 42) next = Math.max(DPR_MIN, dpr * 0.85);
+  else if (perf.fps > 57 && dpr < DPR_MAX) next = Math.min(DPR_MAX, dpr * 1.1);
+  if (Math.abs(next - dpr) > 0.02) {
+    dpr = next;
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+  if (statsEl) {
+    const i = renderer.info.render;
+    statsEl.textContent = `${perf.fps.toFixed(0)} fps · ${i.calls} draws · ${(i.triangles / 1e6).toFixed(2)} M tris · dpr ${dpr.toFixed(2)}`;
+  }
+}
+function updateShadows(dt) {
+  // The shadow map is cached: it is redrawn only after the player has moved a few
+  // metres, or while the ferry sails nearby. Standing still costs no shadow pass.
+  if (!renderer.shadowMap.enabled) return;
+  shadowT -= dt;
+  const ferryNear = ferry.group && ferry.phase === 'cruise' && ferry.group.position.distanceTo(camera.position) < 250;
+  if (camera.position.distanceTo(shadowAt) > 4 || (ferryNear && shadowT <= 0)) {
+    shadowAt.set(Math.round(camera.position.x / 2) * 2, camera.position.y, Math.round(camera.position.z / 2) * 2);
+    sun.position.copy(shadowAt).addScaledVector(sunDir, 400);
+    sun.target.position.copy(shadowAt);
+    sun.target.updateMatrixWorld();
+    renderer.shadowMap.needsUpdate = true;
+    shadowT = 0.25;
+  }
+}
 function frame() {
   const now = performance.now();
   const dt = Math.min((now - lastT) / 1000, 0.05); lastT = now;
@@ -978,16 +1055,13 @@ function frame() {
     updateFerry(ferry.phase === 'cruise' ? dt * TIME_SCALE : dt);
     if (running) movePlayer(dt);
     camera.position.copy(player.pos); camera.position.y += player.fly ? 0 : EYE;
-    if (ferry.aboard && ferry.group) {
-      // keep looking where we look while the ferry turns
-    }
     camera.rotation.set(player.pitch, player.yaw, 0, 'YXZ');
-    sun.position.copy(camera.position).addScaledVector(sunDir, 400);
-    sun.target.position.copy(camera.position);
-    if (waterNormal) waterNormal.offset.set(performance.now() * 0.000006, performance.now() * 0.000004);
-    hudT -= dt;
+    updateShadows(dt);
+    if (waterNormal) waterNormal.offset.set(now * 0.000006, now * 0.000004);
+    hudT -= dt; mapT -= dt;
     if (running && hudT <= 0) { hudT = 0.25; updateHud(); }
-    if (running && mapBase) drawMinimap();
+    if (running && mapBase && mapT <= 0) { mapT = 0.1; drawMinimap(); }
+    adaptResolution(dt);
   }
   renderer.render(scene, camera);
   requestAnimationFrame(frame);

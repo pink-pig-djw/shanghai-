@@ -21,6 +21,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
 import bpy  # noqa: E402
+from mathutils import Vector  # noqa: E402
 
 from bund import util as U  # noqa: E402
 from bund import materials, ground, facade, landmarks, bridge, backdrop, context, furniture  # noqa: E402
@@ -43,6 +44,56 @@ def export_collection(coll_name, path):
                               export_texcoords=True, export_normals=True, export_materials="EXPORT",
                               export_yup=True, export_extras=False, export_cameras=False, export_lights=False)
     return True
+
+
+# merge cell size per collection (m); 0 = merge by material only. Small cells keep
+# frustum culling useful near the player, one cell per material keeps draw calls low.
+MERGE_CELL = {
+    "Ground_Roads_Water": 600, "Buildings_Bund_Core": 0, "Buildings_Background": 0,
+    "Landmarks_Historic_Bund": 400, "Bridges_Viaducts": 0, "Backdrop_Lujiazui_Pudong": 0,
+    "Context_City_Ring": 0, "Street_Furniture_Flowers": 300,
+}
+
+
+def merge_by_material(coll_name, cell):
+    """Separate every mesh by material and join the parts per material (and per
+    grid cell of their centres): hundreds of objects x materials become a few
+    dozen draw calls in the browser."""
+    coll = bpy.data.collections.get(coll_name)
+    if coll is None:
+        return 0
+    objs = [o for o in coll.all_objects if o.type == "MESH" and len(o.data.polygons)]
+    if not objs:
+        return 0
+    view = bpy.context.view_layer
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in objs:
+        o.select_set(True)
+    view.objects.active = objs[0]
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.separate(type="MATERIAL")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    groups = {}
+    for o in [o for o in coll.all_objects if o.type == "MESH" and len(o.data.polygons)]:
+        me = o.data
+        mat = me.materials[me.polygons[0].material_index] if me.materials else None
+        key = (mat.name if mat else "",)
+        if cell:
+            c = o.matrix_world @ (sum((Vector(b) for b in o.bound_box), Vector()) / 8)
+            key += (int(math.floor(c.x / cell)), int(math.floor(c.y / cell)))
+        groups.setdefault(key, []).append(o)
+    for key, lst in groups.items():
+        if len(lst) > 1:
+            bpy.ops.object.select_all(action="DESELECT")
+            for o in lst:
+                o.select_set(True)
+            view.objects.active = lst[0]
+            bpy.ops.object.join()
+        name = coll_name + "_" + "_".join(str(k) for k in key)
+        lst[0].name = name
+        lst[0].data.name = name
+    return len(groups)
 
 
 def gltfpack(src, dst):
@@ -182,6 +233,9 @@ def main():
     }
     sizes = {}
     manifest = {"files": {}}
+    for coll_name in parts.values():
+        n = merge_by_material(coll_name, MERGE_CELL.get(coll_name, 0))
+        print(f"[web] {coll_name}: {n} merged meshes")
     for key, coll_name in parts.items():
         raw = os.path.join(OUT, key + ".raw.glb")
         dst = os.path.join(OUT, key + ".glb.gz")
