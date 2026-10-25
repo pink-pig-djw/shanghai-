@@ -555,12 +555,12 @@ function treeGeometry(kind) {
   }
   return { trunk, crown: mergeGeoms(crowns) };
 }
-function mergeGeoms(list) {
+function mergeGeoms(list0) {
+  const list = list0.map((g) => (g.index ? g.toNonIndexed() : g));   // count after de-indexing
   let count = 0; for (const g of list) count += g.attributes.position.count;
   const pos = new Float32Array(count * 3), nor = new Float32Array(count * 3), uv = new Float32Array(count * 2);
   let o = 0;
-  for (const g0 of list) {
-    const g = g0.index ? g0.toNonIndexed() : g0;
+  for (const g of list) {
     pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3);
     if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2);
     o += g.attributes.position.count;
