@@ -225,6 +225,7 @@ const MATDEF = {
   paving_plaza: ['tiles', '#b2aca0', '#a09a8e', 4.0, 1.0, 0.5], paving_deck: ['tiles', '#a8a092', '#989184', 3.2, 0.8, 0.4],
   paving_red: ['tiles', '#8c5c4c', '#7a5040', 0.8, 0.2, 0.1], curb_granite: ['tiles', '#afaca5', '#a5a29b', 4.0, 1.0, 0.3],
   grass: ['grass', '#4e7030'], grass_park: ['grass', '#46682c'], hedge: ['grass', '#325526'], soil: ['noise', '#46382a', 0.3],
+  lawn_base: ['grass', '#486a2c'], hedge_inner: ['grass', '#2c4422'],
   metal_dark: ['metal', '#242826', 0.3, 0.45], metal_black: ['metal', '#141416', 0.3, 0.4], metal_grey: ['metal', '#82868a', 0.6, 0.35],
   metal_green: ['metal', '#284637', 0.3, 0.45], steel_bridge: ['metal', '#808484', 0.35, 0.45], steel_stainless: ['metal', '#bec0c3', 1.0, 0.25],
   bronze: ['metal', '#6e5032', 1.0, 0.4], gold: ['metal', '#d2aa50', 1.0, 0.3], glass_clear: ['glass', '#c8d2d7'],

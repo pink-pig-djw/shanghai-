@@ -269,6 +269,7 @@ def build_all(sc, mats, root):
             SPECIAL[key][1](special, cx, cy)
             continue
         mat = rnd.choice(CURTAINS) if _max_h(b) > 50 else rnd.choice(FAR_FACADES)
+        mb.cur = {"bld": 0.01 + 0.98 * rnd.random()}
         built_parts = 0
         for p, poly in _part_rings(b):
             ext = U.ccw(poly["ext"])

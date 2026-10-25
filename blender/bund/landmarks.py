@@ -999,6 +999,7 @@ def build_all(sc, mats, root, quick=False):
             continue
         rnd = random.Random(zlib.crc32(key.encode()))
         mb = U.MeshBuilder()
+        mb.cur = {"bld": 0.01 + 0.98 * rnd.random()}
         c = Ctx(b, meta.get(key, {}), sc, mb, rnd)
         c.spec = meta.get(key, {})
         try:
@@ -1026,6 +1027,7 @@ def build_all(sc, mats, root, quick=False):
             continue
         st = (b.get("ov") or {}).get("style", "classical")
         rnd = random.Random(zlib.crc32(b["id"].encode()))
+        mb.cur = {"bld": 0.01 + 0.98 * rnd.random()}
         c = Ctx(b, {}, sc, mb, rnd)
         try:
             OVERRIDE.get(st, ov_classical)(c)

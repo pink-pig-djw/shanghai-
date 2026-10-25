@@ -6,7 +6,7 @@ read only the row groups that intersect our area and keep the rows that
 actually overlap it. Output is one GeoJSON FeatureCollection per type in
 ``data/raw/``.
 
-Usage: python tools/fetch_overture.py [--release 2026-10-21.0]
+Usage: python tools/fetch_overture.py [--release 2026-10-21.0] [--context | --far]
 """
 import argparse
 import json
@@ -29,6 +29,8 @@ AREAS = {
     "lujiazui": (121.4940, 31.2280, 121.5130, 31.2450),
     # Surrounding city (massing only) so wide shots end in real streets, not a void.
     "context": (121.4550, 31.2100, 121.5350, 31.2720),
+    # Far ring for the horizon: only high-rises and water (the Huangpu to the horizon).
+    "far": (121.3000, 31.0800, 121.6800, 31.4000),
 }
 # types fetched for the context ring are written to <type>_context.geojson
 CONTEXT_TYPES = ["building", "water", "segment", "land_use"]
@@ -131,9 +133,13 @@ def main():
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "..", "data", "raw"))
     ap.add_argument("--types", nargs="*", default=list(TYPES))
     ap.add_argument("--context", action="store_true", help="fetch the wide context ring instead")
+    ap.add_argument("--far", action="store_true", help="fetch high-rises and water for the horizon ring")
     args = ap.parse_args()
     if args.context:
         fetch_context(args)
+        return
+    if args.far:
+        fetch_far(args)
         return
     fs = s3fs()
     os.makedirs(args.out, exist_ok=True)
@@ -195,6 +201,58 @@ def fetch_context(args):
                        "attribution": "Overture Maps Foundation, release " + args.release +
                        "; contains data © OpenStreetMap contributors (ODbL)"}, fh, ensure_ascii=False, default=str)
         print(f"  -> {len(out)} features, {os.path.getsize(path)/1e6:.1f} MB", flush=True)
+
+
+def fetch_far(args):
+    """Horizon ring: buildings of 45 m / 15 floors and more, plus all water, in a
+    ~36 km box. Only the needed columns are read; written as compact GeoJSON."""
+    fs = s3fs()
+    box_ = AREAS["far"]
+
+    def scan_towers(path):
+        f = pq.ParquetFile(path, filesystem=fs)
+        want = hits(f.metadata, box_)
+        if not want:
+            return []
+        out = []
+        for rg in want:
+            t = f.read_row_group(rg, columns=["id", "bbox", "height", "num_floors", "geometry"])
+            hs, fl, bb = t.column("height").to_pylist(), t.column("num_floors").to_pylist(), t.column("bbox").to_pylist()
+            keep = [i for i in range(t.num_rows)
+                    if ((hs[i] or 0) >= 45 or (fl[i] or 0) >= 15) and bb[i]
+                    and not (bb[i]["xmin"] > box_[2] or bb[i]["xmax"] < box_[0]
+                             or bb[i]["ymin"] > box_[3] or bb[i]["ymax"] < box_[1])]
+            if not keep:
+                continue
+            geo = t.column("geometry")
+            ids = t.column("id")
+            for i in keep:
+                g = wkb.loads(geo[i].as_py()).simplify(0.00001)
+                out.append({"type": "Feature", "geometry": shapely.geometry.mapping(g),
+                            "properties": {"id": ids[i].as_py(), "height": hs[i], "num_floors": fl[i]}})
+        return out
+
+    for typ, theme in (("building", "buildings"), ("water", "base")):
+        files = list_files(fs, args.release, theme, typ)
+        print(f"{typ} (far): {len(files)} files", flush=True)
+        feats = []
+        with cf.ThreadPoolExecutor(16) as ex:
+            if typ == "building":
+                for res in ex.map(scan_towers, files):
+                    feats.extend(res)
+            else:
+                for res in ex.map(lambda p: scan_file(fs, p, [box_]), files):
+                    for f in res:
+                        g = shapely.geometry.shape(f["geometry"]).simplify(0.00003)
+                        f["geometry"] = shapely.geometry.mapping(g)
+                        f["properties"] = {k: f["properties"].get(k) for k in ("subtype", "class")}
+                        feats.append(f)
+        path = os.path.join(args.out, f"{typ}_far.geojson")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump({"type": "FeatureCollection", "features": feats,
+                       "attribution": "Overture Maps Foundation, release " + args.release +
+                       "; contains data © OpenStreetMap contributors (ODbL)"}, fh, ensure_ascii=False, default=str)
+        print(f"  -> {len(feats)} features, {os.path.getsize(path)/1e6:.1f} MB", flush=True)
 
 
 if __name__ == "__main__":

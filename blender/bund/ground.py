@@ -44,18 +44,41 @@ def build(sc, mats, col):
     objs.append(U.add_obj("Pavement_Sidewalks_Plazas", mb.build("pavement", mats), col))
 
     # ---------------- greens, medians, planters ----------------
+    # lawn tops in the core area go to their own object, which vegetation.py
+    # covers with grass blades; median hedges likewise get a leafy surface
     mb = U.MeshBuilder()
+    lawn = U.MeshBuilder()
+    hedge = U.MeshBuilder()
+    cx0, cy0, cx1, cy1 = sc["core"]
+
+    def in_core(ext):
+        xs = [p[0] for p in ext]
+        ys = [p[1] for p in ext]
+        return max(xs) > cx0 and min(xs) < cx1 and max(ys) > cy0 and min(ys) < cy1
+
     for ext, holes in _polys(sc["green"]):
-        U.prism(mb, ext, holes, -0.4, zg, "curb_granite", "grass")
+        if in_core(ext):
+            U.prism(mb, ext, holes, -0.4, zg, "curb_granite", None)
+            U.fill(lawn, ext, holes, zg, "lawn_base")
+        else:
+            U.prism(mb, ext, holes, -0.4, zg, "curb_granite", "grass")
     for ext, holes in _polys(sc.get("wood", [])):
         U.fill(mb, ext, holes, zg + 0.005, "grass_park")
     for ext, holes in _polys(sc["medians"]):
-        U.prism(mb, ext, holes, -0.2, 0.28, "curb_granite", "hedge")
+        U.prism(mb, ext, holes, -0.2, 0.28, "curb_granite", "soil")
+        # clipped hedge (红叶石楠 / 海桐) set back from the kerb
+        inner = U.offset_ring(U.ccw(ext), 0.3)
+        if len(inner) >= 3 and U.signed_area(inner) > 0.6 and U.signed_area(inner) < U.signed_area(U.ccw(ext)):
+            U.prism(hedge, inner, [], 0.28, 0.95, "hedge_inner", "hedge_inner")
     for ext, holes in _polys(sc.get("planters", [])):
         U.prism(mb, ext, holes, 0.0, zp + 0.5, "granite_grey", "soil")
         inner = U.offset_ring(U.ccw(ext), 0.35)
-        U.fill(mb, inner, [], zp + 0.52, "grass")
+        U.fill(lawn, inner, [], zp + 0.52, "lawn_base")
     objs.append(U.add_obj("Greens_Medians_Planters", mb.build("greens", mats), col))
+    if len(lawn):
+        objs.append(U.add_obj("Lawns_Core", lawn.build("lawns_core", mats), col))
+    if len(hedge):
+        objs.append(U.add_obj("Median_Hedges", hedge.build("median_hedges", mats), col))
 
     # ---------------- Bund promenade deck (flood wall top) ----------------
     mb = U.MeshBuilder()

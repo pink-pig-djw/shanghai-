@@ -51,11 +51,13 @@ def build_all(mats, root, path=None):
             continue
         h = b["h"]
         area = abs(U.signed_area(ring))
+        bld = {"bld": 0.01 + 0.98 * rnd.random()}
         if h <= 16.0 and 20.0 < area < 1500.0:
             fill, short = _rect_frame(ring)
             if fill > 0.8 and short < 16.0:
                 wall = rnd.choice(LOW_WALLS)
                 mb = groups.setdefault(wall, U.MeshBuilder())
+                mb.cur = bld
                 U.walls(mb, ring, -0.3, h, wall)
                 U.fill(mb, ring, [], h, "roof_flat")
                 roof = "roof_tile_grey" if rnd.random() < 0.72 else "roof_tile_red"
@@ -63,10 +65,40 @@ def build_all(mats, root, path=None):
                 continue
         mat = rnd.choice(TOWERS) if h > 45 else rnd.choice(FACADES)
         mb = groups.setdefault(mat, U.MeshBuilder())
+        mb.cur = bld
         U.walls(mb, ring, -0.3, h, mat)
         U.fill(mb, ring, [], h, "roof_flat")
         if h > 18.0 and area > 150.0:
-            roof_stuff(mb, ring, h, rnd, per_area=400.0, max_n=3)
+            roof_stuff(mb, ring, h, rnd, per_area=400.0, max_n=3, shed=0.3)
+        elif area > 120.0:
+            roof_stuff(mb, ring, h, rnd, per_area=600.0, max_n=1, shed=0.35)
     for mat, mb in groups.items():
         U.add_obj(f"Context_Buildings_{mat}", mb.build(f"ctx_{mat}", mats), col)
     print(f"[context] {len(cx['buildings'])} buildings")
+    if cx.get("far"):
+        _far_ring(cx["far"], mats, col, rnd)
+
+
+def _far_ring(far, mats, col, rnd):
+    """Horizon: a procedural city carpet to 40 km (it fades into the haze), the
+    real high-rises and the real river beyond the context ring."""
+    mb = U.MeshBuilder()
+    R = 40000.0
+    U.fill(mb, [(-R, -R), (R, -R), (R, R), (-R, R)], [], -2.5, "far_city")
+    for p in far.get("water", []):
+        U.fill(mb, p["ext"], p.get("holes", []), -2.3, "water_huangpu")
+    U.add_obj("Far_City_Carpet_Water", mb.build("far_ground", mats), col)
+    mb = U.MeshBuilder()
+    for b in far.get("towers", []):
+        ring = U.ccw(b["e"])
+        if len(ring) < 3:
+            continue
+        h = b["h"]
+        mb.cur = {"bld": 0.01 + 0.98 * rnd.random()}
+        mat = rnd.choice(TOWERS + ["facade_tile_beige", "facade_tile_grey"])
+        U.walls(mb, ring, -2.5, h, mat)
+        U.fill(mb, ring, [], h, "roof_flat")
+    mb.cur = {}
+    if len(mb):
+        U.add_obj("Far_HighRises", mb.build("far_towers", mats), col)
+    print(f"[context] far ring: {len(far.get('towers', []))} high-rises")

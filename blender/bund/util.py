@@ -254,6 +254,9 @@ class MeshBuilder:
         self.mats = []
         self._mi = {}
         self.fattr = {}
+        # attributes stamped on every new face (e.g. {"bld": 0.37}: one random
+        # value per building, so merged meshes still vary building by building)
+        self.cur = {}
 
     def mat(self, name):
         i = self._mi.get(name)
@@ -272,10 +275,14 @@ class MeshBuilder:
         self.uv.append(uvs if uvs is not None else _auto_uv(cos))
         self.m.append(self.mat(mat))
         self.sm.append(smooth)
-        if attrs or self.fattr:
-            for k in set(self.fattr) | set(attrs or {}):
+        self._attrs(attrs)
+
+    def _attrs(self, attrs):
+        a = {**self.cur, **attrs} if (attrs and self.cur) else (attrs or self.cur)
+        if a or self.fattr:
+            for k in set(self.fattr) | set(a):
                 lst = self.fattr.setdefault(k, [0.0] * (len(self.f) - 1))
-                lst.append((attrs or {}).get(k, 0.0))
+                lst.append(a.get(k, 0.0))
 
     def shared(self, cos):
         """Add vertices and return their indices (for connected surfaces)."""
@@ -289,10 +296,7 @@ class MeshBuilder:
         self.uv.append(uvs if uvs is not None else _auto_uv(cos))
         self.m.append(self.mat(mat))
         self.sm.append(smooth)
-        if attrs or self.fattr:
-            for k in set(self.fattr) | set(attrs or {}):
-                lst = self.fattr.setdefault(k, [0.0] * (len(self.f) - 1))
-                lst.append((attrs or {}).get(k, 0.0))
+        self._attrs(attrs)
 
     def extend(self, other):
         off = len(self.v)

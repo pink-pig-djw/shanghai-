@@ -49,8 +49,9 @@ class Facade:
             self.wall, self.base, self.trim = wall, rustic, trim
             self.gf = rnd.uniform(4.6, 5.6)
             self.bay = rnd.uniform(3.2, 4.2)
-            self.win_w = rnd.uniform(1.3, 1.6)
-            self.win_h_frac = rnd.uniform(0.55, 0.62)
+            # tall sash / casement windows of 1900-1930s office blocks
+            self.win_w = rnd.uniform(1.45, 1.85)
+            self.win_h_frac = rnd.uniform(0.6, 0.68)
             self.sill = 0.95
             self.window = rnd.choice(["window_hist_white", "window_hist_white", "window_hist_dark",
                                       "window_hist_green"])
@@ -228,12 +229,15 @@ def bay_layout(L, bay, win_w, margin=0.6):
     return cols
 
 
-def roof_stuff(mb, ring, z, rnd, big=False, per_area=120.0, max_n=8):
-    """Rooftop plant: stair/lift housing, AC units, water tanks."""
+def roof_stuff(mb, ring, z, rnd, big=False, per_area=120.0, max_n=8, shed=0.0):
+    """Rooftop plant: stair/lift housing, AC units, water tanks; with probability
+    `shed` also one of the steel rooftop sheds (often blue) so typical of Shanghai."""
     xs = [p[0] for p in ring]
     ys = [p[1] for p in ring]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
     area = abs(U.signed_area(ring))
+    if shed and area > 120 and rnd.random() < shed:
+        _shed(mb, ring, z, rnd)
     n = int(min(max_n, area / per_area)) + (1 if big else 0)
     placed = 0
     for _ in range(n * 6):
@@ -250,6 +254,31 @@ def roof_stuff(mb, ring, z, rnd, big=False, per_area=120.0, max_n=8):
         mat = "concrete" if placed == 0 else rnd.choice(["metal_grey", "concrete", "concrete_white"])
         U.box(mb, -w / 2, -d / 2, 0, w / 2, d / 2, h, mat, origin=(cx, cy, z), h=hd)
         placed += 1
+
+
+def _shed(mb, ring, z, rnd):
+    """Lightweight steel shed on a flat roof: walls plus a shallow monopitch roof."""
+    best = max(range(len(ring)), key=lambda i: math.dist(ring[i], ring[(i + 1) % len(ring)]))
+    a, b = ring[best], ring[(best + 1) % len(ring)]
+    hd = math.atan2(b[1] - a[1], b[0] - a[0])
+    c, s_ = math.cos(-hd), math.sin(-hd)
+    loc = [((p[0] - a[0]) * c - (p[1] - a[1]) * s_, (p[0] - a[0]) * s_ + (p[1] - a[1]) * c) for p in ring]
+    u0, u1 = min(p[0] for p in loc), max(p[0] for p in loc)
+    v0, v1 = min(p[1] for p in loc), max(p[1] for p in loc)
+    w = (u1 - u0) * rnd.uniform(0.3, 0.6)
+    d = (v1 - v0) * rnd.uniform(0.35, 0.7)
+    us = rnd.uniform(u0 + 0.8, max(u0 + 0.8, u1 - 0.8 - w))
+    vs = rnd.uniform(v0 + 0.8, max(v0 + 0.8, v1 - 0.8 - d))
+    corners = [U.xform((uu, vv, 0), (a[0], a[1], 0), hd) for uu, vv in ((us, vs), (us + w, vs), (us + w, vs + d), (us, vs + d))]
+    if not all(U.pip(p[0], p[1], ring) for p in corners):
+        return
+    h0, h1 = 2.4, 2.9
+    mat_w = rnd.choice(["metal_roof_blue", "metal_roof_blue", "metal_grey", "concrete_white"])
+    ring2 = [(p[0], p[1]) for p in corners]
+    U.walls(mb, ring2, z, z + h0, mat_w)
+    top = [(corners[0][0], corners[0][1], z + h0), (corners[1][0], corners[1][1], z + h0),
+           (corners[2][0], corners[2][1], z + h1), (corners[3][0], corners[3][1], z + h1)]
+    mb.face(top, "metal_roof_blue" if rnd.random() < 0.7 else "metal_grey")
 
 
 def gable_roof(mb, ring, z, pitch_h, mat_roof, mat_wall):
@@ -414,7 +443,7 @@ def build_massing(mb, poly, b, rnd, wall_mat, roof_mat="roof_flat"):
     if area > 200 and top < 120:
         parapet(mb, ext, top, 1.0, 0.3, wall_mat, "concrete_white")
     if area > 90:
-        roof_stuff(mb, ext, top, rnd, per_area=220.0, max_n=5)
+        roof_stuff(mb, ext, top, rnd, per_area=220.0, max_n=5, shed=0.25)
 
 
 def build_all(sc, mats, root, quick=False, web=False):
@@ -433,6 +462,7 @@ def build_all(sc, mats, root, quick=False, web=False):
         detailed = reg == "core" and not quick
         key = "core" if reg == "core" else ("pudong" if reg == "pudong" else "back")
         mb = groups.setdefault(key, U.MeshBuilder())
+        mb.cur = {"bld": 0.01 + 0.98 * brnd.random()}
         for poly in b["poly"]:
             if detailed or (reg == "pudong" and b["style"] != "modern" and not quick):
                 h = min(b["h"], 5.5) if b["style"] == "kiosk" else b["h"]
@@ -446,6 +476,7 @@ def build_all(sc, mats, root, quick=False, web=False):
                     wall = "facade_hist_dist"
                 build_massing(mb, poly, b, brnd, wall)
             count += 1
+        mb.cur = {}
         # flush big groups into separate objects to keep meshes manageable
         if len(mb) > 400000:
             name = f"Buildings_{key}_{len([o for o in col_core.objects]) + len(col_back.objects)}"

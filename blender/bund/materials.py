@@ -139,8 +139,9 @@ class NB:
             self.link(vec, t.inputs[0])
         return self.o(t, out)
 
-    def ramp(self, fac, stops):
+    def ramp(self, fac, stops, interp="LINEAR"):
         r = self.n("ShaderNodeValToRGB")
+        r.color_ramp.interpolation = interp
         el = r.color_ramp.elements
         while len(el) > len(stops):
             el.remove(el[-1])
@@ -151,6 +152,17 @@ class NB:
             e.color = col if len(col) == 4 else (*col, 1.0)
         self.link(fac, r.inputs[0])
         return r.outputs[0]
+
+    def bld(self):
+        """Per-building random value (face attribute 'bld', 0 where unset)."""
+        return self.attr("bld")
+
+    def bld_tint(self, col, warm=(0.80, 0.76, 0.70), cool=(1.04, 1.05, 1.08)):
+        """Shift a facade colour building by building: darker/warmer to lighter/cooler.
+        bld == 0 (attribute missing) keeps the colour unchanged."""
+        t = self.ramp(self.bld(), [(0.0, (1.0, 1.0, 1.0)), (0.002, warm), (0.55, (0.97, 0.96, 0.95)),
+                                   (1.0, cool)])
+        return self.mix(1.0, col, t, blend="MULTIPLY")
 
     def mix(self, fac, a, b, blend="MIX"):
         m = self.n("ShaderNodeMix", data_type="RGBA", blend_type=blend)
@@ -290,6 +302,7 @@ def stone(name, rgb, var=0.12, rough=0.62, block=(1.1, 0.48), joint=0.006, strea
                 nb.math("MULTIPLY", nb.noise(uv, 9.0, 4), 0.25))
     nrm = nb.bump(h, 0.35 if not rustic else 0.9, 0.01 if not rustic else 0.03)
     r = nb.math("ADD", rough, nb.math("MULTIPLY", st, 0.12))
+    col = nb.bld_tint(col)
     col = nb.grime(col, uv, base)
     if tidal is not None:
         col, r = _tidal(nb, col, r, uv, base, tidal)
@@ -312,6 +325,7 @@ def plaster(name, rgb, var=0.08, rough=0.8, streaks=0.25):
     st = nb.math("POWER", nb.math("SUBTRACT", 1.0, nb.noise(sv.outputs[0], 1.0, 3), clamp=True), 3.0)
     col = nb.mix(nb.math("MULTIPLY", st, streaks * 3), col, mix_rgb(base, (0.03, 0.03, 0.03), 0.55))
     nrm = nb.bump(nb.noise(uv, 25.0, 5, 0.7), 0.12, 0.005)
+    col = nb.bld_tint(col)
     col = nb.grime(col, uv, base)
     nb.output(nb.bsdf(col, rough, normal=nrm, spec=0.3))
     return m
@@ -355,6 +369,7 @@ def brick(name, rgb1, rgb2, mortar=(185, 180, 170), bw=0.24, bh=0.065, band=None
         col = nb.mix(bm, col, bandcol)
         h = nb.mix(bm, h, 0.6)
     nrm = nb.bump(h, 0.5, 0.008)
+    col = nb.bld_tint(col, warm=(0.84, 0.8, 0.76), cool=(1.06, 1.04, 1.04))
     col = nb.grime(col, uv, lin(rgb1), amount=0.45)
     nb.output(nb.bsdf(col, rough, normal=nrm, spec=0.3))
     return m
@@ -419,9 +434,11 @@ def window_glass(name, frame_rgb=(235, 232, 225), panes=(2, 3), tint=(30, 36, 40
         mv = nb.math("FRACT", nb.math("MULTIPLY", v, panes[1]))
         frame = nb.math("MAXIMUM", frame, band(mv, 0.018 * panes[1]))
     # interior: dark room, curtains (lower part), blinds; some rooms lit
-    dark = lin((18, 18, 20))
-    curtain = lin((150, 135, 110))
-    blind = lin((190, 188, 180))
+    # interiors receive a fraction of the daylight on the facade, so even
+    # curtains and blinds read dark from the street
+    dark = lin((10, 10, 11))
+    curtain = lin((70, 60, 48))
+    blind = lin((92, 90, 85))
     inter = nb.mix(nb.math("GREATER_THAN", rnd, 0.72), dark, curtain)
     blinds = nb.math("LESS_THAN", nb.math("FRACT", nb.math("MULTIPLY", v, 28.0)), 0.5)
     bl = nb.math("MULTIPLY", nb.math("GREATER_THAN", rnd, 0.88), nb.math("GREATER_THAN", v, 0.35))
@@ -469,8 +486,10 @@ def curtain_wall(name, glass=(60, 80, 95), mullion=(150, 155, 160), spandrel=(70
     wn = nb.n("ShaderNodeTexWhiteNoise")
     nb.link(cell.outputs[0], wn.inputs[0])
     pv = wn.outputs[0]
-    g = lin(glass)
-    gcol = nb.mix(nb.math("MULTIPLY", pv, 0.5), g, mix_rgb(g, (0, 0, 0), 0.5))
+    g = nb.ramp(nb.bld(), [(0.0, lin(glass)), (0.3, mix_rgb(lin(glass), (0, 0, 0), 0.35)),
+                           (0.6, mix_rgb(lin(glass), lin((96, 112, 120)), 0.4)),
+                           (1.0, mix_rgb(lin(glass), lin((40, 58, 62)), 0.45))])
+    gcol = nb.mix(nb.math("MULTIPLY", pv, 0.5), g, nb.mix(0.5, g, (0, 0, 0, 1)))
     lit = nb.math("GREATER_THAN", pv, 0.93)
     gcol = nb.mix(nb.math("MULTIPLY", lit, 0.6), gcol, lin((200, 190, 160)))
     col = nb.mix(span, gcol, lin(spandrel))
@@ -486,37 +505,68 @@ def curtain_wall(name, glass=(60, 80, 95), mullion=(150, 155, 160), spandrel=(70
     return m
 
 
-def punched_facade(name, wall=(190, 185, 175), glass=(40, 48, 55), bay=3.2, win_w=1.7,
-                   floor=3.4, win_h=1.9, sill=0.9, ground=4.5):
-    """Flat wall with painted-on windows: used for distant / backdrop buildings."""
+def punched_facade(name, palette, glass=(40, 48, 55), bay=3.2, win_w=1.7, floor=3.4, win_h=1.9, sill=0.9,
+                   ground=4.5, balcony=0.35):
+    """Flat wall with painted-on windows for distant / backdrop buildings.
+
+    One merged mesh holds thousands of buildings, so everything that should
+    differ between buildings is driven by the per-building 'bld' attribute:
+    wall colour (from a palette of real Shanghai finishes), bay width, window
+    proportions, floor height, balcony slabs and the ground-floor shopfronts.
+    """
     m = new_mat(name)
     nb = NB(m)
     uv = nb.uv()
     sep = nb.n("ShaderNodeSeparateXYZ")
     nb.link(uv, sep.inputs[0])
     u, v = nb.o(sep, "X"), nb.o(sep, "Y")
-    orand = nb.obj_rand()
-    fu = nb.math("FRACT", nb.math("DIVIDE", u, bay))
+    b = nb.bld()
+    b2 = nb.math("FRACT", nb.math("MULTIPLY", b, 7.13))
+    b3 = nb.math("FRACT", nb.math("MULTIPLY", b, 13.71))
+    b4 = nb.math("FRACT", nb.math("MULTIPLY", b, 29.37))
+    bayv = nb.math("MULTIPLY", bay, nb.math("ADD", 0.8, nb.math("MULTIPLY", b2, 0.45)))
+    flv = nb.math("MULTIPLY", floor, nb.math("ADD", 0.92, nb.math("MULTIPLY", b3, 0.16)))
+    wwf = nb.math("MINIMUM", nb.math("MULTIPLY", win_w / bay, nb.math("ADD", 0.75, nb.math("MULTIPLY", b4, 0.55))), 0.86)
+    whf = nb.math("MINIMUM", nb.math("MULTIPLY", win_h / floor, nb.math("ADD", 0.85, nb.math("MULTIPLY", b3, 0.3))), 0.8)
+    fu = nb.math("FRACT", nb.math("DIVIDE", u, bayv))
     vv = nb.math("SUBTRACT", v, ground)
-    fv = nb.math("FRACT", nb.math("DIVIDE", vv, floor))
-    wu = nb.math("LESS_THAN", nb.math("ABSOLUTE", nb.math("SUBTRACT", fu, 0.5)), win_w / bay / 2)
-    wv = nb.math("MULTIPLY", nb.math("GREATER_THAN", fv, sill / floor),
-                 nb.math("LESS_THAN", fv, (sill + win_h) / floor))
+    fv = nb.math("FRACT", nb.math("DIVIDE", vv, flv))
+    s0 = sill / floor
+    wu = nb.math("LESS_THAN", nb.math("ABSOLUTE", nb.math("SUBTRACT", fu, 0.5)), nb.math("MULTIPLY", wwf, 0.5))
+    wv = nb.math("MULTIPLY", nb.math("GREATER_THAN", fv, s0), nb.math("LESS_THAN", fv, nb.math("ADD", s0, whf)))
     win = nb.math("MULTIPLY", nb.math("MULTIPLY", wu, wv), nb.math("GREATER_THAN", vv, 0.0))
-    wall_c = lin(wall)
-    wcol = nb.mix(nb.math("MULTIPLY", nb.noise(uv, 0.3, 3), 0.5), wall_c, mix_rgb(wall_c, (0, 0, 0), 0.35))
-    wcol = nb.mix(nb.math("MULTIPLY", orand, 0.4), wcol, mix_rgb(wall_c, (0.6, 0.5, 0.4), 0.4))
+    # ground floor shopfronts: wide glazing between 0.5 m and 1 m below the first floor
+    shop = nb.math("MULTIPLY", nb.math("LESS_THAN", vv, -0.9), nb.math("GREATER_THAN", v, 0.5))
+    shop = nb.math("MULTIPLY", shop, nb.math("LESS_THAN", nb.math("ABSOLUTE", nb.math("SUBTRACT", fu, 0.5)), 0.42))
+    shop = nb.math("MULTIPLY", shop, nb.math("GREATER_THAN", b2, 0.35))
+    stops = [(i / max(len(palette) - 1, 1), lin(c)) for i, c in enumerate(palette)]
+    wall_c = nb.ramp(b, stops, interp="CONSTANT")
+    wall_c = nb.mix(nb.math("MULTIPLY", b4, 0.3), wall_c, nb.mix(0.5, wall_c, (0.5, 0.45, 0.4, 1)))
+    wcol = nb.mix(nb.math("MULTIPLY", nb.noise(uv, 0.3, 3), 0.45), wall_c, nb.mix(0.35, wall_c, (0, 0, 0, 1)))
+    # rain streaks below windows and grime from the roof edge
+    sv = nb.n("ShaderNodeCombineXYZ")
+    nb.link(nb.math("MULTIPLY", u, 1.6), sv.inputs[0])
+    nb.link(nb.math("MULTIPLY", v, 0.07), sv.inputs[1])
+    st = nb.math("POWER", nb.math("SUBTRACT", 1.0, nb.noise(sv.outputs[0], 1.0, 3), clamp=True), 2.5)
+    wcol = nb.mix(nb.math("MULTIPLY", st, 0.6), wcol, nb.mix(0.55, wcol, (0.03, 0.03, 0.025, 1)))
+    # balcony slabs / spandrel bands on some buildings
+    bal = nb.math("MULTIPLY", nb.math("GREATER_THAN", b2, 1.0 - balcony),
+                  nb.math("MULTIPLY", nb.math("LESS_THAN", fv, 0.09), nb.math("GREATER_THAN", vv, 0.0)))
+    wcol = nb.mix(bal, wcol, nb.mix(0.6, wall_c, (0.85, 0.85, 0.82, 1)))
     cell = nb.n("ShaderNodeCombineXYZ")
-    nb.link(nb.math("FLOOR", nb.math("DIVIDE", u, bay)), cell.inputs[0])
-    nb.link(nb.math("FLOOR", nb.math("DIVIDE", vv, floor)), cell.inputs[1])
-    nb.link(orand, cell.inputs[2])
+    nb.link(nb.math("FLOOR", nb.math("DIVIDE", u, bayv)), cell.inputs[0])
+    nb.link(nb.math("FLOOR", nb.math("DIVIDE", vv, flv)), cell.inputs[1])
+    nb.link(b, cell.inputs[2])
     wn = nb.n("ShaderNodeTexWhiteNoise")
     nb.link(cell.outputs[0], wn.inputs[0])
-    gl = nb.mix(nb.math("MULTIPLY", wn.outputs[0], 0.7), lin(glass), lin((120, 115, 100)))
-    col = nb.mix(win, wcol, gl)
-    rough = nb.mix(win, 0.8, 0.08)
-    nrm = nb.bump(win, -0.4, 0.05)
-    nb.output(nb.bsdf(col, rough, normal=nrm, spec=nb.mix(win, 0.3, 0.7)))
+    wr = wn.outputs[0]
+    gl = nb.mix(nb.math("MULTIPLY", wr, 0.8), lin(glass), lin((96, 104, 112)))
+    gl = nb.mix(nb.math("GREATER_THAN", wr, 0.9), gl, lin((150, 132, 100)))   # curtains / lit rooms
+    glazing = nb.math("MAXIMUM", win, shop)
+    col = nb.mix(glazing, wcol, gl)
+    rough = nb.mix(glazing, 0.82, 0.06)
+    nrm = nb.bump(nb.math("ADD", glazing, nb.math("MULTIPLY", bal, -0.6)), -0.5, 0.06)
+    nb.output(nb.bsdf(col, rough, normal=nrm, spec=nb.mix(glazing, 0.3, 0.75)))
     return m
 
 
@@ -581,20 +631,67 @@ def paving(name, rgb, tile=(0.6, 0.3), var=0.12, joint=0.006, rough=0.7, rgb2=No
     return m
 
 
-def grass(name="grass", rgb=(78, 112, 48)):
+def grass(name="grass", rgb=(70, 100, 40)):
+    """Lawn seen from a distance (and the ground between instanced blades):
+    clumps, worn and dry patches, clover-dark spots, fine blade texture."""
     m = new_mat(name)
     nb = NB(m)
     uv = nb.uv()
-    n1 = nb.noise(uv, 0.15, 4, 0.6)
-    n2 = nb.noise(uv, 2.0, 3, 0.6)
     base = lin(rgb)
-    col = nb.ramp(n1, [(0.3, mix_rgb(base, (0.02, 0.05, 0.0), 0.35)), (0.55, base),
-                       (0.8, mix_rgb(base, lin((150, 150, 70)), 0.35))])
-    col = nb.mix(nb.math("MULTIPLY", n2, 0.3), col, mix_rgb(base, (0, 0, 0), 0.4))
-    blades = nb.noise(uv, 300.0, 1)
-    col = nb.mix(nb.math("MULTIPLY", blades, 0.25), col, mix_rgb(base, (1, 1, 0.6), 0.3))
-    nrm = nb.bump(nb.math("ADD", blades, nb.math("MULTIPLY", n2, 0.5)), 0.5, 0.01)
-    nb.output(nb.bsdf(col, 0.92, normal=nrm, spec=0.25, Sheen_Weight=0.3))
+    n1 = nb.noise(uv, 0.12, 4, 0.6)
+    n2 = nb.noise(uv, 1.5, 4, 0.6)
+    col = nb.ramp(n1, [(0.28, mix_rgb(base, (0.02, 0.05, 0.0), 0.4)), (0.5, base),
+                       (0.72, mix_rgb(base, lin((140, 146, 66)), 0.35))])
+    col = nb.mix(nb.math("MULTIPLY", n2, 0.35), col, mix_rgb(base, (0, 0, 0), 0.45))
+    dry = nb.math("GREATER_THAN", nb.noise(uv, 0.45, 3, 0.6), 0.64)
+    col = nb.mix(nb.math("MULTIPLY", dry, 0.55), col, lin((132, 122, 74)))
+    worn = nb.math("GREATER_THAN", nb.noise(uv, 0.08, 2, 0.5), 0.7)
+    col = nb.mix(nb.math("MULTIPLY", worn, 0.35), col, lin((96, 82, 58)))
+    blades = nb.noise(uv, 260.0, 1)
+    col = nb.mix(nb.math("MULTIPLY", blades, 0.3), col, mix_rgb(base, (1, 1, 0.6), 0.25))
+    nrm = nb.bump(nb.math("ADD", blades, nb.math("MULTIPLY", n2, 0.5)), 0.6, 0.012)
+    nb.output(nb.bsdf(col, 0.9, normal=nrm, spec=0.25, Sheen_Weight=0.12))
+    return m
+
+
+def far_city(name="far_city"):
+    """The city beyond the modelled ring, seen from kilometres away: blocks of
+    roofs (grey, beige, red tile, dark) cut by streets, parks here and there."""
+    m = new_mat(name)
+    nb = NB(m)
+    uv = nb.uv()
+    warp = nb.vmath("ADD", uv, nb.vmath("SCALE", nb.noise(uv, 0.002, 2, 0.5, out="Color"), scale=120.0))
+    blk = nb.n("ShaderNodeTexVoronoi", feature="DISTANCE_TO_EDGE")
+    nb.set(blk, "Scale", 1 / 140.0)
+    nb.link(warp, blk.inputs[0])
+    street = nb.math("LESS_THAN", nb.o(blk, "Distance"), 9.0 / 140.0)
+    cells = nb.voronoi(warp, 1 / 140.0, "Color")
+    sepc = nb.n("ShaderNodeSeparateColor")
+    nb.link(cells, sepc.inputs[0])
+    pal = [(118, 114, 106), (148, 140, 124), (134, 86, 66), (92, 90, 88), (164, 160, 150), (110, 104, 96)]
+    col = nb.ramp(sepc.outputs[0], [(i / (len(pal) - 1), lin(c)) for i, c in enumerate(pal)], interp="CONSTANT")
+    bld = nb.voronoi(uv, 1 / 22.0, "Color")
+    sepb = nb.n("ShaderNodeSeparateColor")
+    nb.link(bld, sepb.inputs[0])
+    col = nb.mix(nb.math("MULTIPLY", sepb.outputs[0], 0.55), col, nb.mix(0.6, col, (0.02, 0.02, 0.02, 1)))
+    park = nb.math("GREATER_THAN", nb.noise(uv, 0.0012, 3, 0.5), 0.68)
+    col = nb.mix(park, col, lin((58, 74, 40)))
+    col = nb.mix(street, col, lin((70, 70, 70)))
+    nb.output(nb.bsdf(col, 0.85, spec=0.3))
+    return m
+
+
+def lawn_base(name="lawn_base"):
+    """Ground under the instanced grass blades: dense thatch and shade, dark
+    green-brown, so gaps between blades read as deep grass, not bare earth."""
+    m = new_mat(name)
+    nb = NB(m)
+    uv = nb.uv()
+    n1 = nb.noise(uv, 0.3, 4, 0.6)
+    col = nb.ramp(n1, [(0.3, lin((30, 40, 18))), (0.6, lin((44, 58, 24))), (0.85, lin((62, 70, 34)))])
+    col = nb.mix(nb.math("MULTIPLY", nb.noise(uv, 40.0, 2), 0.4), col, lin((70, 64, 40)))
+    nrm = nb.bump(nb.noise(uv, 120.0, 2), 0.5, 0.01)
+    nb.output(nb.bsdf(col, 0.95, normal=nrm, spec=0.2))
     return m
 
 
@@ -653,6 +750,33 @@ def concrete(name, rgb=(150, 148, 142), rough=0.85, stain=0.3, tidal=None):
     return m
 
 
+def roof_flat(name="roof_flat"):
+    """Flat roofs: screed, bitumen felt, pale coatings and tiled terraces vary by
+    building; moss and dirt collect in patches."""
+    m = new_mat(name)
+    nb = NB(m)
+    uv = nb.uv()
+    pal = [(128, 126, 120), (92, 90, 88), (150, 146, 136), (72, 72, 74), (120, 108, 94), (138, 140, 136)]
+    base = nb.ramp(nb.bld(), [(i / (len(pal) - 1), lin(c)) for i, c in enumerate(pal)], interp="CONSTANT")
+    n1 = nb.noise(uv, 0.25, 4, 0.6)
+    col = nb.mix(nb.math("MULTIPLY", n1, 0.5), base, nb.mix(0.45, base, (0, 0, 0, 1)))
+    moss = nb.math("MULTIPLY", nb.math("GREATER_THAN", nb.noise(uv, 0.6, 3, 0.6), 0.62), 0.5)
+    col = nb.mix(moss, col, lin((70, 74, 52)))
+    tiles = nb.n("ShaderNodeTexBrick")
+    nb.set(tiles, "Brick Width", 0.5)
+    nb.set(tiles, "Row Height", 0.5)
+    nb.set(tiles, "Mortar Size", 0.01)
+    nb.set(tiles, "Color1", (1, 1, 1, 1))
+    nb.set(tiles, "Color2", (0.9, 0.9, 0.9, 1))
+    nb.set(tiles, "Mortar", (0.6, 0.6, 0.6, 1))
+    nb.link(uv, tiles.inputs[0])
+    tiled = nb.math("GREATER_THAN", nb.math("FRACT", nb.math("MULTIPLY", nb.bld(), 5.3)), 0.7)
+    col = nb.mix(tiled, col, nb.mix(1.0, col, tiles.outputs[0], blend="MULTIPLY"))
+    nrm = nb.bump(nb.noise(uv, 30.0, 3), 0.2, 0.004)
+    nb.output(nb.bsdf(col, 0.9, normal=nrm, spec=0.3))
+    return m
+
+
 def simple(name, rgb, rough=0.5, metal=0.0, spec=0.5, emission=None, strength=0.0, alpha=None, **kw):
     m = new_mat(name)
     nb = NB(m)
@@ -676,40 +800,105 @@ def painted_metal(name, rgb, rough=0.45, metal=0.3):
 
 
 def bark(name, rgb1, rgb2, mottled=False):
+    """Tree bark. mottled: London plane, shedding in plates (cream, olive, grey
+    patches); otherwise furrowed bark with vertical fissures."""
     m = new_mat(name)
     nb = NB(m)
     pos = nb.pos()
     if mottled:
-        v = nb.voronoi(pos, 7.0, "Distance")
-        col = nb.ramp(v, [(0.2, lin(rgb1)), (0.45, lin(rgb2)), (0.7, lin((120, 125, 95)))])
+        warp = nb.vmath("ADD", pos, nb.vmath("SCALE", nb.noise(pos, 2.2, 3, 0.6, out="Color"), scale=0.45))
+        v = nb.voronoi(warp, 9.0, "Distance")
+        cell = nb.voronoi(warp, 9.0, "Color")
+        sepc = nb.n("ShaderNodeSeparateColor")
+        nb.link(cell, sepc.inputs[0])
+        pick = nb.o(sepc, "Red") if any(o.name == "Red" for o in sepc.outputs) else sepc.outputs[0]
+        col = nb.ramp(pick, [(0.0, lin(rgb2)), (0.3, lin(rgb2)), (0.4, lin(rgb1)), (0.62, lin(rgb1)),
+                             (0.72, lin((150, 146, 112))), (0.88, lin((112, 114, 88))), (1.0, lin((96, 96, 76)))])
+        col = nb.mix(nb.math("MULTIPLY", nb.noise(pos, 14.0, 3), 0.35), col, nb.mix(0.5, col, (0.1, 0.1, 0.08, 1)))
+        col = nb.mix(nb.math("MULTIPLY", nb.math("LESS_THAN", v, 0.06), 0.7), col, lin((60, 58, 46)))
+        h = nb.math("ADD", nb.math("MULTIPLY", nb.math("LESS_THAN", v, 0.06), -0.6),
+                    nb.math("MULTIPLY", nb.noise(pos, 40.0, 3), 0.3))
+        rough = 0.75
     else:
         sep = nb.n("ShaderNodeSeparateXYZ")
         nb.link(pos, sep.inputs[0])
         sv = nb.n("ShaderNodeCombineXYZ")
-        nb.link(nb.math("MULTIPLY", nb.o(sep, "X"), 6.0), sv.inputs[0])
-        nb.link(nb.math("MULTIPLY", nb.o(sep, "Y"), 6.0), sv.inputs[1])
-        nb.link(nb.math("MULTIPLY", nb.o(sep, "Z"), 0.8), sv.inputs[2])
-        n = nb.noise(sv.outputs[0], 3.0, 4, 0.6)
-        col = nb.ramp(n, [(0.3, lin(rgb1)), (0.7, lin(rgb2))])
-    nrm = nb.bump(nb.noise(pos, 20.0, 4, 0.6), 0.6, 0.02)
-    nb.output(nb.bsdf(col, 0.85, normal=nrm, spec=0.3))
+        nb.link(nb.math("MULTIPLY", nb.o(sep, "X"), 9.0), sv.inputs[0])
+        nb.link(nb.math("MULTIPLY", nb.o(sep, "Y"), 9.0), sv.inputs[1])
+        nb.link(nb.math("MULTIPLY", nb.o(sep, "Z"), 0.9), sv.inputs[2])
+        fis = nb.noise(sv.outputs[0], 2.5, 5, 0.65)
+        col = nb.ramp(fis, [(0.3, mix_rgb(lin(rgb2), (0, 0, 0), 0.4)), (0.5, lin(rgb2)), (0.75, lin(rgb1))])
+        lich = nb.math("GREATER_THAN", nb.noise(pos, 4.0, 3), 0.66)
+        col = nb.mix(nb.math("MULTIPLY", lich, 0.45), col, lin((120, 126, 96)))
+        h = fis
+        rough = 0.88
+    nrm = nb.bump(h, 0.8, 0.02)
+    nb.output(nb.bsdf(col, rough, normal=nrm, spec=0.3))
     return m
 
 
-def foliage(name, rgb, rgb2=None, translucency=0.35, rough=0.55):
+def foliage(name, greens, autumn=None, autumn_frac=0.0, translucency=0.38, rough=0.45, coat=0.0, veins=0.18):
+    """Leaf blades. Colour varies leaf by leaf ('rnd' face attribute) and tree by
+    tree (object random); a fraction of leaves takes autumn colours. Midrib and
+    side veins are drawn in leaf UV space; light shines through (translucency)."""
     m = new_mat(name)
     nb = NB(m)
     rnd = nb.attr("rnd")
-    base = lin(rgb)
-    alt = lin(rgb2) if rgb2 else mix_rgb(base, lin((160, 170, 60)), 0.4)
     orand = nb.obj_rand()
-    t = nb.math("FRACT", nb.math("ADD", rnd, orand))
-    col = nb.ramp(t, [(0.0, mix_rgb(base, (0, 0, 0), 0.25)), (0.55, base), (1.0, alt)])
-    p = nb.bsdf(col, rough, spec=0.45)
+    t = nb.math("FRACT", nb.math("ADD", rnd, nb.math("MULTIPLY", orand, 0.37)))
+    col = nb.ramp(t, [(i / (len(greens) - 1), lin(c)) for i, c in enumerate(greens)])
+    if autumn:
+        frac = nb.math("MULTIPLY", autumn_frac, nb.math("ADD", 0.5, orand))
+        is_aut = nb.math("LESS_THAN", nb.math("FRACT", nb.math("ADD", nb.math("MULTIPLY", rnd, 7.77), orand)), frac)
+        acol = nb.ramp(nb.math("FRACT", nb.math("MULTIPLY", rnd, 3.31)),
+                       [(i / max(len(autumn) - 1, 1), lin(c)) for i, c in enumerate(autumn)])
+        col = nb.mix(is_aut, col, acol)
+    uv = nb.uv()
+    sep = nb.n("ShaderNodeSeparateXYZ")
+    nb.link(uv, sep.inputs[0])
+    u, v = nb.o(sep, "X"), nb.o(sep, "Y")
+    du = nb.math("ABSOLUTE", nb.math("SUBTRACT", u, 0.5))
+    midrib = nb.math("LESS_THAN", du, 0.014)
+    side = nb.math("LESS_THAN", nb.math("FRACT", nb.math("MULTIPLY", nb.math("SUBTRACT", v, nb.math("MULTIPLY", du, 1.3)), 9.0)), 0.07)
+    vein = nb.math("MAXIMUM", midrib, nb.math("MULTIPLY", side, 0.6))
+    col = nb.mix(nb.math("MULTIPLY", vein, veins), col, nb.mix(0.5, col, lin((200, 210, 120))))
+    # slightly darker, browner leaf margins and blotches
+    blot = nb.noise(uv, 4.0, 3)
+    col = nb.mix(nb.math("MULTIPLY", nb.math("GREATER_THAN", blot, 0.68), 0.35), col, nb.mix(0.6, col, lin((90, 70, 30))))
+    nrm = nb.bump(vein, 0.25, 0.002)
+    p = nb.bsdf(col, rough, spec=0.5, normal=nrm, Coat_Weight=coat, Coat_Roughness=0.25, Sheen_Weight=0.15)
     tr = nb.n("ShaderNodeBsdfTranslucent")
-    nb.link(nb.mix(0.5, col, lin((140, 170, 40))), tr.inputs[0])
+    nb.link(nb.mix(0.45, col, lin((150, 175, 40))), tr.inputs[0])
+    nb.link(nrm, tr.inputs["Normal"])
     ms = nb.n("ShaderNodeMixShader")
     ms.inputs[0].default_value = translucency
+    nb.link(p, ms.inputs[1])
+    nb.link(tr.outputs[0], ms.inputs[2])
+    nb.output(ms.outputs[0])
+    return m
+
+
+def grass_blade(name="grass_blade"):
+    """Lawn grass blades: darker at the base, lighter towards the tip, one in ten
+    already dry and straw-coloured in late October."""
+    m = new_mat(name)
+    nb = NB(m)
+    rnd = nb.attr("rnd")
+    uv = nb.uv()
+    sep = nb.n("ShaderNodeSeparateXYZ")
+    nb.link(uv, sep.inputs[0])
+    v = nb.o(sep, "Y")
+    green = nb.ramp(rnd, [(0.0, lin((58, 86, 30))), (0.5, lin((74, 108, 38))), (1.0, lin((96, 122, 46)))])
+    col = nb.mix(nb.math("POWER", nb.math("SUBTRACT", 1.0, v), 2.0), green, nb.mix(0.6, green, lin((22, 32, 12))))
+    col = nb.mix(nb.math("MULTIPLY", v, 0.35), col, nb.mix(0.5, green, lin((150, 160, 80))))
+    dry = nb.math("GREATER_THAN", nb.math("FRACT", nb.math("MULTIPLY", rnd, 13.7)), 0.9)
+    col = nb.mix(dry, col, nb.ramp(nb.math("FRACT", nb.math("MULTIPLY", rnd, 5.3)),
+                                   [(0.0, lin((150, 136, 82))), (1.0, lin((120, 108, 64)))]))
+    p = nb.bsdf(col, 0.5, spec=0.4, Sheen_Weight=0.2)
+    tr = nb.n("ShaderNodeBsdfTranslucent")
+    nb.link(nb.mix(0.5, col, lin((140, 170, 50))), tr.inputs[0])
+    ms = nb.n("ShaderNodeMixShader")
+    ms.inputs[0].default_value = 0.32
     nb.link(p, ms.inputs[1])
     nb.link(tr.outputs[0], ms.inputs[2])
     nb.output(ms.outputs[0])
@@ -730,20 +919,20 @@ def emissive(name, rgb, strength):
 
 def build_all():
     # facade stones: Suzhou granite / artificial stone tones seen on the Bund
-    stone("granite_light", (196, 190, 176))
-    stone("granite_warm", (190, 176, 152), var=0.14)
-    stone("granite_golden", (200, 182, 148), var=0.12)
-    stone("granite_white", (214, 210, 200), var=0.1, streaks=0.22)
-    stone("granite_grey", (160, 158, 152))
+    stone("granite_light", (184, 176, 160))
+    stone("granite_warm", (180, 163, 138), var=0.14)
+    stone("granite_golden", (188, 168, 134), var=0.12)
+    stone("granite_white", (200, 195, 184), var=0.1, streaks=0.22)
+    stone("granite_grey", (150, 147, 140))
     stone("granite_dark", (120, 116, 110), rough=0.5)
-    stone("rustic_light", (186, 180, 166), rustic=True, block=(1.4, 0.62))
-    stone("rustic_warm", (176, 164, 142), rustic=True, block=(1.4, 0.62))
-    stone("rustic_golden", (190, 172, 140), rustic=True, block=(1.4, 0.62))
-    stone("rustic_white", (204, 200, 190), rustic=True, block=(1.4, 0.62))
+    stone("rustic_light", (172, 165, 150), rustic=True, block=(1.4, 0.62))
+    stone("rustic_warm", (166, 152, 130), rustic=True, block=(1.4, 0.62))
+    stone("rustic_golden", (178, 160, 128), rustic=True, block=(1.4, 0.62))
+    stone("rustic_white", (190, 185, 174), rustic=True, block=(1.4, 0.62))
     stone("rustic_grey", (150, 148, 142), rustic=True, block=(1.4, 0.62))
-    stone("trim_light", (222, 218, 206), var=0.06, block=(2.0, 0.6), joint=0.003, streaks=0.12)
-    plaster("stucco_cream", (222, 210, 182))
-    plaster("stucco_white", (232, 228, 218))
+    stone("trim_light", (208, 202, 188), var=0.06, block=(2.0, 0.6), joint=0.003, streaks=0.12)
+    plaster("stucco_cream", (208, 194, 164))
+    plaster("stucco_white", (214, 209, 197))
     plaster("stucco_grey", (176, 174, 168))
     plaster("stucco_ochre", (206, 176, 132))
     plaster("stucco_pink", (210, 180, 165))
@@ -759,10 +948,10 @@ def build_all():
     roof_tiles("glazed_tile_blue", (40, 92, 110), glazed=True, pitch=0.22)
     roof_tiles("glazed_tile_green", (50, 105, 70), glazed=True, pitch=0.22)
     copper_patina()
-    concrete("roof_flat", (128, 126, 120), rough=0.9, stain=0.4)
+    roof_flat("roof_flat")
     concrete("concrete", (158, 156, 150))
     concrete("concrete_dark", (110, 108, 104))
-    concrete("concrete_white", (210, 210, 205), stain=0.2)
+    concrete("concrete_white", (194, 193, 186), stain=0.25)
     # river walls: dark tidal band up to about mean high water (water plane at z=-1.8)
     stone("bank_granite", (160, 158, 152), tidal=-0.5)
     concrete("bank_concrete", (150, 148, 142), tidal=-0.5)
@@ -777,12 +966,19 @@ def build_all():
     curtain_wall("curtain_grey", glass=(70, 76, 82), mullion=(180, 182, 185))
     curtain_wall("curtain_silver", glass=(110, 120, 130), mullion=(200, 202, 205), module=1.2, floor=4.2)
     curtain_wall("curtain_gold", glass=(120, 100, 60), mullion=(150, 130, 90), spandrel=(110, 95, 70))
-    punched_facade("facade_tile_white", wall=(210, 206, 196))
-    punched_facade("facade_tile_beige", wall=(196, 180, 152))
-    punched_facade("facade_tile_grey", wall=(150, 150, 148))
-    punched_facade("facade_tile_pink", wall=(196, 168, 156))
-    punched_facade("facade_hist_dist", wall=(180, 170, 150), bay=3.8, win_w=1.5, win_h=2.4, floor=4.0,
-                   sill=0.9, ground=5.0)
+    # finishes of 1980s-2010s Shanghai buildings: white/cream mosaic tile, beige
+    # and brown tile, grey render, salmon and red-brown tile, plus brick
+    punched_facade("facade_tile_white", [(206, 203, 196), (212, 200, 172), (186, 186, 183), (214, 202, 162),
+                                         (196, 201, 206), (200, 192, 180)])
+    punched_facade("facade_tile_beige", [(190, 170, 140), (168, 148, 118), (202, 182, 150), (158, 128, 102),
+                                         (184, 160, 128), (176, 166, 150)])
+    punched_facade("facade_tile_grey", [(150, 150, 148), (124, 124, 124), (170, 168, 162), (108, 110, 114),
+                                        (140, 135, 128), (160, 156, 150)], balcony=0.5)
+    punched_facade("facade_tile_pink", [(196, 160, 145), (180, 130, 110), (204, 172, 152), (160, 110, 95),
+                                        (150, 92, 76), (188, 150, 120)], balcony=0.5)
+    punched_facade("facade_hist_dist", [(176, 166, 146), (150, 140, 124), (160, 116, 92), (186, 176, 156),
+                                        (138, 128, 118), (170, 150, 120), (122, 112, 104)],
+                   bay=3.8, win_w=1.5, win_h=2.4, floor=4.0, sill=0.9, ground=5.0, balcony=0.0)
     # ground
     asphalt("asphalt")
     asphalt("asphalt_old", (64, 63, 62))
@@ -794,7 +990,7 @@ def build_all():
     paving("paving_red", (140, 92, 76), tile=(0.2, 0.1), var=0.1)
     paving("curb_granite", (175, 172, 165), tile=(1.0, 0.3), joint=0.004, rough=0.55)
     grass("grass")
-    grass("grass_park", (70, 104, 44))
+    grass("grass_park", (64, 96, 38))
     simple("soil", (70, 56, 42), rough=0.95, spec=0.2)
     water("water_huangpu")
     simple("riverbed", (120, 120, 112), rough=1.0)
@@ -803,6 +999,7 @@ def build_all():
     painted_metal("metal_black", (20, 20, 22), rough=0.4)
     painted_metal("metal_grey", (130, 134, 136), metal=0.6, rough=0.35)
     painted_metal("metal_green", (40, 70, 55))
+    painted_metal("metal_roof_blue", (52, 98, 150), rough=0.5, metal=0.4)   # rooftop steel sheds
     painted_metal("steel_bridge", (128, 132, 132), metal=0.35, rough=0.45)
     simple("steel_stainless", (190, 192, 195), rough=0.25, metal=1.0)
     simple("bronze", (110, 80, 50), rough=0.4, metal=1.0)
@@ -831,12 +1028,23 @@ def build_all():
     simple("flag_red", (200, 20, 25), rough=0.7)
     simple("bench_wood", (120, 82, 50), rough=0.7)
     simple("rubber", (25, 25, 25), rough=0.9)
-    bark("bark_plane", (150, 150, 130), (95, 98, 80), mottled=True)
-    bark("bark_camphor", (70, 60, 50), (45, 40, 34))
-    bark("bark_ginkgo", (90, 82, 70), (60, 55, 46))
-    foliage("leaf_plane", (70, 100, 40), (120, 140, 50))
-    foliage("leaf_camphor", (45, 80, 35), (90, 120, 45), rough=0.4)
-    foliage("leaf_ginkgo", (120, 140, 50), (170, 170, 60))
-    foliage("hedge", (50, 85, 38), (80, 110, 45), translucency=0.2)
-    foliage("flowers", (170, 60, 70), (220, 180, 70), translucency=0.2)
+    bark("bark_plane", (176, 170, 140), (118, 116, 92), mottled=True)
+    bark("bark_camphor", (86, 76, 64), (52, 46, 38))
+    bark("bark_ginkgo", (108, 100, 88), (68, 62, 52))
+    # late October: plane trees begin to brown, ginkgo to yellow, camphor stays green
+    foliage("leaf_plane", [(56, 84, 32), (74, 104, 40), (98, 120, 48), (120, 132, 56)],
+            autumn=[(176, 150, 70), (156, 116, 50), (124, 92, 46), (190, 168, 92)], autumn_frac=0.16)
+    foliage("leaf_camphor", [(34, 60, 26), (46, 76, 32), (60, 92, 38), (92, 118, 50)],
+            autumn=[(150, 62, 40), (176, 126, 52)], autumn_frac=0.035, rough=0.32, coat=0.35)
+    foliage("leaf_ginkgo", [(90, 120, 42), (112, 136, 50), (138, 150, 58)],
+            autumn=[(206, 178, 62), (222, 196, 80), (180, 160, 60)], autumn_frac=0.3)
+    foliage("hedge", [(30, 54, 26), (42, 70, 32), (56, 86, 38), (74, 100, 44)], rough=0.32, coat=0.3,
+            translucency=0.25)
+    foliage("leaf_photinia_red", [(124, 34, 26), (150, 54, 36), (112, 52, 34), (96, 70, 40)], rough=0.3,
+            coat=0.3, translucency=0.3)
+    foliage("flowers", [(170, 60, 70), (200, 90, 100), (220, 180, 70)], translucency=0.2)
+    grass_blade("grass_blade")
+    lawn_base("lawn_base")
+    far_city("far_city")
+    simple("hedge_inner", (26, 36, 18), rough=0.9, spec=0.2)
     return MATS

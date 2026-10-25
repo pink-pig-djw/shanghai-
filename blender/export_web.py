@@ -164,8 +164,8 @@ def main():
     context.build_all(mats, root)
     window_variants(mats)
     print(f"[web] scene built ({time.time() - t0:.0f}s)")
-    # the browser draws its own water and riverbed
-    for name in ("Water_Huangpu_SuzhouCreek", "Riverbed"):
+    # the browser draws its own water and riverbed; its fog hides the horizon ring
+    for name in ("Water_Huangpu_SuzhouCreek", "Riverbed", "Far_City_Carpet_Water", "Far_HighRises"):
         o = bpy.data.objects.get(name)
         if o:
             bpy.data.objects.remove(o)

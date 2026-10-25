@@ -102,15 +102,15 @@ def world(haze=True):
         ld = bpy.data.lights.new("Sun", "SUN")
         sun = bpy.data.objects.new("Sun", ld)
         U.coll("Stage").objects.link(sun)
-    sun.data.energy = 4.4
+    sun.data.energy = 4.3
     sun.data.angle = math.radians(0.53)
-    sun.data.color = (1.0, 0.85, 0.68)
+    sun.data.color = (1.0, 0.80, 0.60)   # low morning sun through the city haze
     d = _sun_vector()
     sun.rotation_euler = (-d).to_track_quat("-Z", "Y").to_euler()
     return w
 
 
-def _haze_volume(density=0.00011, radius=9000.0, top=700.0, n=96):
+def _haze_volume(density=0.00011, radius=30000.0, top=700.0, n=128):
     """Aerial perspective: a finite low-density volume over the city.
 
     A cylinder rather than a box, so the haze path length to the edge is the
