@@ -6,9 +6,14 @@
 
 | | |
 |---|---|
-| ![外滩鸟瞰](renders/CAM_02_Aerial_Overview.jpg) | ![汇丰银行与海关大楼](renders/CAM_06_Customs_HSBC.jpg) |
-| ![南京东路口与陈毅广场](renders/CAM_08_Nanjing_Road_Junction.jpg) | ![外白渡桥与上海大厦](renders/CAM_04_Waibaidu_Bridge.jpg) |
-| ![从外滩看陆家嘴](renders/CAM_07_Pudong_From_Bund.jpg) | ![交通网络俯视](renders/CAM_09_TopDown_Traffic.jpg) |
+| ![外滩鸟瞰：城市延伸进晨霾](renders/CAM_02_Aerial_Overview.jpg) | ![北向鸟瞰：黄浦公园、外白渡桥与苏州河口](renders/CAM_10_Aerial_North.jpg) |
+| ![滨江广场的秋菊花坛与长椅，对面是汇丰银行](renders/CAM_13_Plaza_Flowerbeds.jpg) | ![中山东一路与外滩金融牛](renders/CAM_05_Street_Zhongshan_E1.jpg) |
+| ![汇丰银行与江海关大楼](renders/CAM_06_Customs_HSBC.jpg) | ![南京东路口与陈毅广场](renders/CAM_08_Nanjing_Road_Junction.jpg) |
+| ![外白渡桥与上海大厦](renders/CAM_04_Waibaidu_Bridge.jpg) | ![从外滩望陆家嘴（逆光晨雾）](renders/CAM_07_Pudong_From_Bund.jpg) |
+| ![防汛墙观景平台](renders/CAM_03_Promenade_North.jpg) | ![浦东滨江远眺外滩全景](renders/CAM_12_From_Pudong_Wide.jpg) |
+| ![江上远眺](renders/CAM_01_River_Postcard.jpg) | ![交通网络俯视](renders/CAM_09_TopDown_Traffic.jpg) |
+
+渲染参数：Blender 5.2 Cycles，1920×1080，48 采样 + OpenImageDenoise，AgX 中高对比，合成器加轻微柔光、色散与暗角。
 
 ## 范围
 
@@ -155,12 +160,12 @@ python tools/fetch_overture.py --context  # 可选：外围城市环
 python tools/fetch_overture.py --far      # 可选：远景环（高层 + 水系）
 python tools/prepare_scene.py             # data/raw -> data/scene.json（道路、标线、绿地、灯杆…）
 python tools/prepare_context.py           # -> data/context.json
-python blender/build_bund.py --out output/shanghai_bund.blend --render all --samples 128
+python blender/build_bund.py --out output/shanghai_bund.blend --render all --samples 48
 # 或：blender -b -P blender/build_bund.py -- --out output/shanghai_bund.blend
 python blender/export_web.py              # 重新导出漫游版（需要 npx gltfpack）
 ```
 
-`build_bund.py` 约 4 分钟建好场景；`.blend` 太大放不进 Git（GitHub 单文件上限 100 MB），所以仓库里只有生成脚本和数据，运行一次即可得到 `output/shanghai_bund.blend`（外围城市环单独存为 `output/shanghai_bund_context.blend` 并被主文件链接）。场景按集合分组：地面道路水体、核心区建筑、历史地标、外滩源、桥梁高架、陆家嘴、外围城市环、树木、街道设施、相机。
+`build_bund.py` 在 4 核 CPU 上约 7 分钟建好场景，每个 1080p 机位渲染约 4–5 分钟。`.blend` 太大放不进 Git（主文件约 190 MB，GitHub 单文件上限 100 MB），所以仓库里只有生成脚本和数据，运行一次即可得到 `output/shanghai_bund.blend`（外围城市环与远景环单独存为 `output/shanghai_bund_context.blend` 并被主文件链接）。场景按集合分组：地面道路水体、核心区建筑、历史地标、外滩源、桥梁高架、陆家嘴、外围城市环、树木与草坪、街道设施、花坛长椅、相机。
 
 ## 目录
 
