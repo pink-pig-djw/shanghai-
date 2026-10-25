@@ -194,6 +194,9 @@ def camera_specs(sc):
         # the classic view of the Bund from the Pudong riverside (滨江大道), morning sun on the facades
         "CAM_11_From_Pudong_Classic": ((324, 40, 4.2), (-190, 70, 26), 45),
         "CAM_12_From_Pudong_Wide": ((345, -120, 40), (-170, 160, 12), 26),
+        # eye level on the riverside plaza opposite HSBC: flower bed and benches, the
+        # Bund road with its hedge median, HSBC and the Customs House behind
+        "CAM_13_Plaza_Flowerbeds": ((-112, -86, 1.7), (-220, -78, 14), 28),
     }
 
 
