@@ -563,7 +563,8 @@ def build_all(sc, mats, root, web=False):
         for d in (4.5, -4.5):
             sx, sy = x + math.cos(h) * d, y + math.sin(h) * d
             if open_ground(sx, sy) and obs.free(sx, sy, 1.0):
-                put("sign" if i % 2 == 0 else "board", sx, sy, zp, h)
+                # the stairs join street and promenade: stand on whichever surface is here
+                put("sign" if i % 2 == 0 else "board", sx, sy, zd if deck.find(sx, sy) else zp, h)
                 obs.add(sx, sy, 1.0)
                 break
 
