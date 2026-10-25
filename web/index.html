@@ -64,7 +64,9 @@ kbd { font-family: var(--f-body); font-size: 12px; padding: 1px 6px; border: 1px
 #prompt { position: absolute; left: 50%; bottom: calc(22% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 10px 16px; font-size: 15px; white-space: nowrap; }
 #map { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding: 6px; pointer-events: auto; }
 #map canvas { display: block; width: 210px; height: 210px; border-radius: 4px; }
-#map.big canvas { width: min(70vh, 80vw); height: min(70vh, 80vw); }
+#map.big canvas { width: min(70vh, 80vw); height: min(70vh, 80vw); cursor: crosshair; }
+#map.big { z-index: 15; }
+.map-hint { font-size: 12px; color: var(--ink-dim); padding: 6px 2px 0; text-align: center; }
 .tp { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding: 10px; display: grid; gap: 6px; pointer-events: auto; max-width: min(300px, 60vw); }
 .tp[hidden] { display: none !important; }
 .tp button { font: 13px var(--f-body); text-align: left; color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 5px 8px; cursor: pointer; }
@@ -91,7 +93,7 @@ kbd { font-family: var(--f-body); font-size: 12px; padding: 1px 6px; border: 1px
       <div><kbd>Shift</kbd><span>小跑</span></div>
       <div><kbd>E</kbd><span>上船 / 下船</span></div>
       <div><kbd>T</kbd><span>传送到景点</span></div>
-      <div><kbd>M</kbd><span>放大地图</span></div>
+      <div><kbd>M</kbd><span>全图 · 点哪去哪</span></div>
       <div><kbd>F</kbd><span>飞行模式</span></div>
       <div><kbd>Esc</kbd><span>暂停</span></div>
     </div>
@@ -107,7 +109,7 @@ kbd { font-family: var(--f-body); font-size: 12px; padding: 1px 6px; border: 1px
   <div id="place" class="panel"><span class="label">附近</span><span class="zh" id="place-name">外滩</span><span class="meta" id="place-meta">中山东一路</span></div>
   <div id="ferry" class="panel"><span class="label">东金线轮渡</span><span class="state" id="ferry-state">—</span><span class="meta" id="ferry-meta" style="font-size:12px;color:var(--ink-dim)">金陵东路渡口 ⇄ 东昌路渡口</span></div>
   <div id="prompt" class="panel" hidden></div>
-  <div id="map" class="panel" title="M 放大 / 缩小"><canvas id="map-c" width="420" height="420" aria-label="小地图"></canvas></div>
+  <div id="map" class="panel" title="点击或按 M 打开全图，在全图上点击任意位置瞬移"><canvas id="map-c" width="420" height="420" aria-label="地图：点击任意位置瞬移"></canvas><div class="map-hint" id="map-hint" hidden>点击任意位置瞬移 · M / Esc 关闭</div></div>
   <div class="hud-btns" id="hud-btns"><button class="hud-btn" id="btn-tp" type="button">传送 T</button><button class="hud-btn" id="btn-e" type="button" hidden>上船 E</button></div>
   <div class="tp panel" id="tp" hidden></div>
   <div id="touch"><div id="stick"><i></i></div></div>

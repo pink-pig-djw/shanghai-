@@ -865,13 +865,78 @@ function buildMinimap() {
     world.ferry_routes[0].pts.forEach(([x, y], i) => { const [px, py] = P(x, y); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke(); ctx.setLineDash([]);
   }
   mapBase = c;
-  $('map').addEventListener('click', () => $('map').classList.toggle('big'));
+  // small map: click to open the full map; full map: click anywhere to go there
+  $('map').addEventListener('click', (e) => {
+    if (!bigMap()) { setBigMap(true); return; }
+    const cv = $('map-c'); const r = cv.getBoundingClientRect();
+    const cx = (e.clientX - r.left) / r.width * cv.width, cy = (e.clientY - r.top) / r.height * cv.height;
+    if (cx < 0 || cy < 0 || cx > cv.width || cy > cv.height) { setBigMap(false); return; }
+    const S = mapBase.width / MAP.size, k = cv.width / mapBase.width;
+    teleportTo(MAP.x0 + cx / k / S, MAP.y0 + (mapBase.height - cy / k) / S);
+    setBigMap(false);
+  });
+}
+const bigMap = () => $('map').classList.contains('big');
+function setBigMap(on) {
+  $('map').classList.toggle('big', on);
+  const c = $('map-c'); const size = on ? 840 : 420;
+  if (c.width !== size) { c.width = size; c.height = size; }
+  $('map-hint').hidden = !on;
+  if (on) document.exitPointerLock?.(); else if (running) requestLock();
+  mapT = 0;                                   // redraw on the next frame
+}
+let flashUntil = 0;
+function flash(text) {
+  const p = $('prompt'); p.textContent = text; p.hidden = false; flashUntil = performance.now() + 2500;
+}
+function teleportTo(bx, by) {
+  // nearest walkable spot to the clicked point: outside buildings, on the ground, not in the river
+  const tryAt = (x, y) => {
+    if (blockedByBuilding(x, y, 0.5)) return null;
+    const p = B(x, y, 0); const g = groundAt(new THREE.Vector3(p.x, 40, p.z), 40);
+    if (g === null || g < world.levels.water + 0.3) return null;
+    return new THREE.Vector3(p.x, g, p.z);
+  };
+  let spot = tryAt(bx, by);
+  for (let r = 3; !spot && r <= 300; r += 3) {
+    const n = Math.max(8, Math.round(2 * Math.PI * r / 3));
+    for (let i = 0; i < n && !spot; i++) spot = tryAt(bx + Math.cos(2 * Math.PI * i / n) * r, by + Math.sin(2 * Math.PI * i / n) * r);
+  }
+  if (!spot) { flash('那里超出可漫游范围'); return false; }
+  ferry.aboard = false;
+  player.pos.copy(spot); player.vy = 0;
+  if (player.fly) player.pos.y += 25;
+  hudT = 0;
+  return true;
 }
 function drawMinimap() {
   const c = $('map-c'); const ctx = c.getContext('2d');
-  const W = c.width; const scale = $('map').classList.contains('big') ? 1.0 : 2.4;
+  const W = c.width;
   const S = mapBase.width / MAP.size;
   const px = (player.pos.x - MAP.x0) * S, py = mapBase.height - ((-player.pos.z) - MAP.y0) * S;
+  if (bigMap()) {
+    // the whole map, north up, with the teleport places for orientation
+    const k = W / mapBase.width;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, W);
+    ctx.drawImage(mapBase, 0, 0, W, W);
+    ctx.font = '600 20px "Noto Sans SC", sans-serif'; ctx.textBaseline = 'middle';
+    for (const t of world.teleports) {
+      const tx = (t.pos[0] - MAP.x0) * S * k, ty = (mapBase.height - (t.pos[1] - MAP.y0) * S) * k;
+      ctx.fillStyle = '#d8b46a'; ctx.beginPath(); ctx.arc(tx, ty, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(14,20,22,0.85)'; ctx.strokeText(t.name, tx + 9, ty);
+      ctx.fillStyle = '#f3ede1'; ctx.fillText(t.name, tx + 9, ty);
+    }
+    if (ferry.group) {
+      const fx = (ferry.group.position.x - MAP.x0) * S * k, fy = (mapBase.height - ((-ferry.group.position.z) - MAP.y0) * S) * k;
+      ctx.fillStyle = '#6fb59a'; ctx.beginPath(); ctx.arc(fx, fy, 7, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.save(); ctx.translate(px * k, py * k); ctx.rotate(-player.yaw);
+    ctx.fillStyle = '#f3ede1'; ctx.strokeStyle = '#0e1416'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(10, 11); ctx.lineTo(0, 6); ctx.lineTo(-10, 11); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  const scale = 2.4;
   ctx.save(); ctx.clearRect(0, 0, W, W);
   ctx.translate(W / 2, W / 2); ctx.scale(scale * W / mapBase.width * 2, scale * W / mapBase.width * 2);
   ctx.translate(-px, -py);
@@ -921,7 +986,7 @@ function updateHud() {
     const near = ['puxi', 'pudong'].some((w) => terminalPoint(w).distanceTo(player.pos) < 45);
     if (near) text = '轮渡即将靠岸，请稍候…';
   }
-  prompt.hidden = !text; prompt.textContent = text;
+  if (performance.now() > flashUntil) { prompt.hidden = !text; prompt.textContent = text; }
   be.hidden = !text || text.includes('稍候'); be.textContent = ferry.aboard ? '下船 E' : '上船 E';
 }
 function interact() {
@@ -947,7 +1012,7 @@ let lockedAt = 0;
 document.addEventListener('pointerlockchange', () => {
   locked = document.pointerLockElement === canvas;
   if (locked) lockedAt = performance.now();
-  if (!locked && running && $('tp').hidden && !matchMedia('(pointer: coarse)').matches) showPause();
+  if (!locked && running && $('tp').hidden && !bigMap() && !matchMedia('(pointer: coarse)').matches) showPause();
 });
 function showPause() { $('intro').hidden = false; $('start').textContent = '继续漫游'; $('hud').hidden = true; running = false; }
 document.addEventListener('mousemove', (e) => {
@@ -960,7 +1025,8 @@ window.addEventListener('keydown', (e) => {
   if (!running) return;
   if (e.code === 'KeyE') interact();
   if (e.code === 'KeyT') { const tp = $('tp'); tp.hidden = !tp.hidden; if (!tp.hidden) document.exitPointerLock?.(); else requestLock(); }
-  if (e.code === 'KeyM') $('map').classList.toggle('big');
+  if (e.code === 'KeyM') setBigMap(!bigMap());
+  if (e.code === 'Escape' && bigMap()) setBigMap(false);
   if (e.code === 'KeyF') { player.fly = !player.fly; if (!player.fly) player.vy = 0; }
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
