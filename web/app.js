@@ -198,11 +198,12 @@ function texPunched(wall, glass, { bay = 3.2, floor = 3.4, ww = 1.7, wh = 1.9, s
 
 // material library keyed by the Blender material name
 const MATDEF = {
-  granite_light: ['stone', '#c4beb0'], granite_warm: ['stone', '#beaf98'], granite_golden: ['stone', '#c8b694'],
-  granite_white: ['stone', '#d6d2c8'], granite_grey: ['stone', '#a09e98'], granite_dark: ['stone', '#78746e'],
-  rustic_light: ['rustic', '#bab4a6'], rustic_warm: ['rustic', '#b0a48e'], rustic_golden: ['rustic', '#beac8c'],
-  rustic_white: ['rustic', '#ccc8be'], rustic_grey: ['rustic', '#96948e'], trim_light: ['stone', '#dedace'],
-  stucco_cream: ['noise', '#ded2b6', 0.2], stucco_white: ['noise', '#e8e4da', 0.18], stucco_grey: ['noise', '#b0aea8', 0.2],
+  // weathered stone and render, matching the Blender palette (multiplied by the baked per-building colour)
+  granite_light: ['stone', '#b8b0a0'], granite_warm: ['stone', '#b4a38a'], granite_golden: ['stone', '#bca886'],
+  granite_white: ['stone', '#c8c3b8'], granite_grey: ['stone', '#96938c'], granite_dark: ['stone', '#78746e'],
+  rustic_light: ['rustic', '#aca596'], rustic_warm: ['rustic', '#a69882'], rustic_golden: ['rustic', '#b2a080'],
+  rustic_white: ['rustic', '#beb9ae'], rustic_grey: ['rustic', '#96948e'], trim_light: ['stone', '#d0cabc'],
+  stucco_cream: ['noise', '#d0c2a4', 0.2], stucco_white: ['noise', '#d6d1c5', 0.18], stucco_grey: ['noise', '#b0aea8', 0.2],
   stucco_ochre: ['noise', '#ceb084', 0.2], stucco_pink: ['noise', '#d2b4a5', 0.2],
   brick_red: ['brick', '#964230', '#803628', '#b9b4aa'], brick_red_banded: ['brick', '#9c4632', '#84382a', '#b9b4aa', [1.25, 0.32]],
   brick_brown: ['brick', '#78523a', '#684834', '#968c7d'], brick_grey: ['brick', '#70706c', '#5c5e5c', '#aaa8a0'],
@@ -210,7 +211,7 @@ const MATDEF = {
   roof_tile_red: ['rooftile', '#964632'], roof_tile_grey: ['rooftile', '#48484a'], roof_slate: ['rooftile', '#464a52'],
   glazed_tile_blue: ['glazed', '#285c6e'], glazed_tile_green: ['glazed', '#326946'], copper_patina: ['noise', '#5f9680', 0.35, 0.3, 0.2],
   roof_flat: ['noise', '#807e78', 0.3], concrete: ['noise', '#9e9c96', 0.25], concrete_dark: ['noise', '#6e6c68', 0.25],
-  concrete_white: ['noise', '#d2d2cd', 0.15],
+  concrete_white: ['noise', '#c2c1ba', 0.15],
   window_hist_white: ['window', '#e8e4da', [2, 3]], window_hist_dark: ['window', '#282e2a', [2, 3]],
   window_hist_green: ['window', '#344c3c', [2, 4]], window_shop: ['window', '#1e1e20', [3, 1]],
   window_modern: ['window', '#aaacaf', [2, 1]], window_lane: ['window', '#6e3c28', [2, 2]],
@@ -329,21 +330,28 @@ function makeMaterial(name) {
   m.name = name;
   return m;
 }
-function materialFor(name) {
-  if (!matCache.has(name)) matCache.set(name, makeMaterial(name));
-  return matCache.get(name);
+// vc: the mesh carries per-building colours (vertex colour 'Col', baked by export_web.py)
+function materialFor(name, vc = false) {
+  const key = vc ? name + '|vc' : name;
+  if (!matCache.has(key)) {
+    let m = makeMaterial(name);
+    if (vc) { m = m.clone(); m.vertexColors = true; }
+    matCache.set(key, m);
+  }
+  return matCache.get(key);
 }
 // the surrounding city is kilometres away and half hidden by haze: Lambert shading
 // with the same colour texture, no normal maps, no shadows
 const cheapCache = new Map();
-function cheapMaterialFor(name) {
-  if (!cheapCache.has(name)) {
+function cheapMaterialFor(name, vc = false) {
+  const key = vc ? name + '|vc' : name;
+  if (!cheapCache.has(key)) {
     const m = materialFor(name);
-    const c = new THREE.MeshLambertMaterial({ map: m.map || null, color: m.map ? 0xffffff : m.color });
+    const c = new THREE.MeshLambertMaterial({ map: m.map || null, color: m.map ? 0xffffff : m.color, vertexColors: vc });
     c.name = name + '_far';
-    cheapCache.set(name, c);
+    cheapCache.set(key, c);
   }
-  return cheapCache.get(name);
+  return cheapCache.get(key);
 }
 
 // ---------------------------------------------------------------------------
@@ -388,7 +396,7 @@ renderer.setPixelRatio(dpr);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.AgXToneMapping ?? THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.82;
+renderer.toneMappingExposure = 0.75;
 renderer.shadowMap.enabled = !LOW;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.shadowMap.autoUpdate = false;          // re-rendered only when the player has moved (see frame)
@@ -411,14 +419,14 @@ sky.material.uniforms.rayleigh.value = 1.6;
 sky.material.uniforms.mieCoefficient.value = 0.005;
 sky.material.uniforms.mieDirectionalG.value = 0.8;
 sky.material.uniforms.sunPosition.value.copy(sunDir);
-const sun = new THREE.DirectionalLight(0xffd8aa, 3.0);
+const sun = new THREE.DirectionalLight(0xffcc98, 3.2);   // low, warm morning sun as in the renders
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 // wide enough that the cached shadow map still covers the view after a few metres of walking
 Object.assign(sun.shadow.camera, { left: -150, right: 150, top: 150, bottom: -150, near: 1, far: 900 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
-scene.add(new THREE.HemisphereLight(0xb4c8e0, 0x5e594c, 0.55));
+scene.add(new THREE.HemisphereLight(0xb4c8e0, 0x5e594c, 0.45));
 {
   // the sky never changes: render the atmosphere shader once into a cube map
   // (background) and a prefiltered environment, instead of every frame
@@ -466,7 +474,8 @@ async function load() {
       o.updateMatrix();
       if (!o.isMesh) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
-      const repl = mats.map((m) => (far ? cheapMaterialFor(m.name || '') : materialFor(m.name || '')));
+      const vc = !!o.geometry.attributes.color;
+      const repl = mats.map((m) => (far ? cheapMaterialFor(m.name || '', vc) : materialFor(m.name || '', vc)));
       o.material = Array.isArray(o.material) ? repl : repl[0];
       o.castShadow = key !== 'ground' && !far;
       o.receiveShadow = !far;

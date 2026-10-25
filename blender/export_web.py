@@ -21,6 +21,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
 import bpy  # noqa: E402
+import numpy as np  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 from bund import util as U  # noqa: E402
@@ -42,8 +43,95 @@ def export_collection(coll_name, path):
     bpy.context.view_layer.objects.active = objs[0]
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", use_selection=True, export_apply=True,
                               export_texcoords=True, export_normals=True, export_materials="EXPORT",
+                              export_vertex_color="NAME", export_vertex_color_name="Col",
                               export_yup=True, export_extras=False, export_cameras=False, export_lights=False)
     return True
+
+
+# --------------------------------------------------------------------------
+# per-building colour, baked to vertex colours for the browser
+# --------------------------------------------------------------------------
+def _lin(c):
+    c = np.asarray(c, dtype=np.float64) / 255.0
+    return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+
+
+# base colours of these materials in web/app.js (MATDEF), sRGB
+WEB_BASE = {"facade_tile_white": (210, 206, 196), "facade_tile_beige": (196, 180, 152),
+            "facade_tile_grey": (150, 150, 148), "facade_tile_pink": (196, 168, 156),
+            "facade_hist_dist": (180, 170, 150), "roof_flat": (128, 126, 120)}
+# the same palettes the Blender shaders pick from with the 'bld' attribute (materials.build_all)
+PALETTES = {
+    "facade_tile_white": [(206, 203, 196), (212, 200, 172), (186, 186, 183), (214, 202, 162), (196, 201, 206), (200, 192, 180)],
+    "facade_tile_beige": [(190, 170, 140), (168, 148, 118), (202, 182, 150), (158, 128, 102), (184, 160, 128), (176, 166, 150)],
+    "facade_tile_grey": [(150, 150, 148), (124, 124, 124), (170, 168, 162), (108, 110, 114), (140, 135, 128), (160, 156, 150)],
+    "facade_tile_pink": [(196, 160, 145), (180, 130, 110), (204, 172, 152), (160, 110, 95), (150, 92, 76), (188, 150, 120)],
+    "facade_hist_dist": [(176, 166, 146), (150, 140, 124), (160, 116, 92), (186, 176, 156), (138, 128, 118), (170, 150, 120), (122, 112, 104)],
+    "roof_flat": [(128, 126, 120), (92, 90, 88), (150, 146, 136), (72, 72, 74), (120, 108, 94), (138, 140, 136)],
+}
+# stone / render / brick: darker-warmer to lighter-cooler building by building (cf. NB.bld_tint)
+TINT_POS = np.array([0.0, 0.55, 1.0])
+TINT_RGB = np.array([(0.78, 0.73, 0.66), (0.92, 0.91, 0.89), (0.99, 1.0, 1.0)])
+CURTAIN_POS = np.array([0.0, 0.3, 0.6, 1.0])
+CURTAIN_RGB = np.array([(1.0, 1.0, 1.0), (0.66, 0.66, 0.68), (0.88, 0.9, 0.9), (0.62, 0.76, 0.76)])
+TINTED = ("granite_", "rustic_", "stucco_", "brick_", "trim_", "concrete", "bank_")
+
+
+def _colour_for(base, v):
+    """(n, 3) linear multipliers for faces of material `base` with bld values v."""
+    if base in PALETTES:
+        pal = PALETTES[base]
+        idx = np.minimum((v * len(pal)).astype(int), len(pal) - 1)
+        return np.minimum(_lin(np.array(pal))[idx] / _lin(WEB_BASE[base]), 1.0)
+    if base.startswith("curtain_"):
+        return np.stack([np.interp(v, CURTAIN_POS, CURTAIN_RGB[:, k]) for k in range(3)], axis=1)
+    if base.startswith(TINTED):
+        return np.stack([np.interp(v, TINT_POS, TINT_RGB[:, k]) for k in range(3)], axis=1)
+    return None
+
+
+def bake_building_colours(coll_names):
+    """Write a 'Col' corner colour on every exported mesh: white, except faces whose
+    material varies by building in the Blender shaders (bld attribute)."""
+    n_obj = 0
+    for cn in coll_names:
+        coll = bpy.data.collections.get(cn)
+        if coll is None:
+            continue
+        for ob in coll.all_objects:
+            if ob.type != "MESH" or not len(ob.data.polygons):
+                continue
+            me = ob.data
+            nf = len(me.polygons)
+            bld = np.zeros(nf, dtype=np.float32)
+            a = me.attributes.get("bld")
+            if a is not None and a.domain == "FACE":
+                a.data.foreach_get("value", bld)
+            mi = np.zeros(nf, dtype=np.int32)
+            me.polygons.foreach_get("material_index", mi)
+            col = np.ones((nf, 3), dtype=np.float32)
+            for idx, m in enumerate(me.materials):
+                if m is None:
+                    continue
+                sel = (mi == idx) & (bld > 0)
+                if not sel.any():
+                    continue
+                c = _colour_for(m.name.split(".")[0], bld[sel])
+                if c is not None:
+                    col[sel] = c
+            ls = np.zeros(nf, dtype=np.int32)
+            lt = np.zeros(nf, dtype=np.int32)
+            me.polygons.foreach_get("loop_start", ls)
+            me.polygons.foreach_get("loop_total", lt)
+            rgba = np.ones((len(me.loops), 4), dtype=np.float32)
+            face_of_loop = np.repeat(np.arange(nf), lt)
+            loop_idx = np.concatenate([np.arange(s, s + t) for s, t in zip(ls, lt)]) if nf else np.zeros(0, int)
+            rgba[loop_idx, :3] = col[face_of_loop]
+            attr = me.color_attributes.get("Col") or me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
+            attr.data.foreach_set("color", rgba.ravel())
+            me.color_attributes.active_color = attr
+            n_obj += 1
+    return n_obj
 
 
 # merge cell size per collection (m); 0 = merge by material only. Small cells keep
@@ -233,6 +321,7 @@ def main():
     }
     sizes = {}
     manifest = {"files": {}}
+    print(f"[web] baked building colours on {bake_building_colours(parts.values())} meshes")
     for coll_name in parts.values():
         n = merge_by_material(coll_name, MERGE_CELL.get(coll_name, 0))
         print(f"[web] {coll_name}: {n} merged meshes")
