@@ -110,21 +110,28 @@ def world(haze=True):
     return w
 
 
-def _haze_volume(density=0.00011):
+def _haze_volume(density=0.00011, radius=9000.0, top=700.0, n=96):
     """Aerial perspective: a finite low-density volume over the city.
 
+    A cylinder rather than a box, so the haze path length to the edge is the
+    same in every direction (a box shows its far corners as bright stripes).
     (A world volume would absorb the sun lamp entirely in Cycles.)
     """
     ob = bpy.data.objects.get("Atmosphere_Haze")
     if ob is None:
         me = bpy.data.meshes.new("Atmosphere_Haze")
-        x0, y0, x1, y1, z0, z1 = -9000, -9000, 10000, 9000, -1.0, 700.0
-        v = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0), (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
-        f = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+        cx, cy, z0 = 400.0, 0.0, -1.0
+        v = []
+        for z in (z0, top):
+            for i in range(n):
+                a = 2 * math.pi * i / n
+                v.append((cx + radius * math.cos(a), cy + radius * math.sin(a), z))
+        f = [tuple(range(n - 1, -1, -1)), tuple(range(n, 2 * n))]
+        f += [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
         me.from_pydata(v, [], f)
         ob = bpy.data.objects.new("Atmosphere_Haze", me)
         U.coll("Stage").objects.link(ob)
-        m = bpy.data.materials.new("haze_volume")
+        m = bpy.data.materials.get("haze_volume") or bpy.data.materials.new("haze_volume")
         if hasattr(m, "use_nodes") and not m.use_nodes:
             m.use_nodes = True
         nt = m.node_tree
@@ -254,3 +261,62 @@ def render_settings(samples=128, res=(1920, 1080)):
             break
     vs.exposure = 0.0
     sc.unit_settings.system = "METRIC"
+
+
+def post_process(bloom=0.06, vignette=0.2, dispersion=0.0035):
+    """Camera-like finishing in the compositor: a faint glow around highlights,
+    a touch of lateral chromatic aberration and a gentle vignette."""
+    sc = bpy.context.scene
+    ng = bpy.data.node_groups.get("Bund_Post") or bpy.data.node_groups.new("Bund_Post", "CompositorNodeTree")
+    ng.nodes.clear()
+    if not [s for s in ng.interface.items_tree if getattr(s, "in_out", "") == "OUTPUT"]:
+        ng.interface.new_socket(name="Image", in_out="OUTPUT", socket_type="NodeSocketColor")
+    new, link = ng.nodes.new, ng.links.new
+
+    def math_node(op, a, b, c=None):
+        m = new("ShaderNodeMath")
+        m.operation = op
+        for i, v in enumerate((a, b, c)):
+            if v is None:
+                continue
+            if isinstance(v, (int, float)):
+                m.inputs[i].default_value = v
+            else:
+                link(v, m.inputs[i])
+        return m.outputs[0]
+
+    rl = new("CompositorNodeRLayers")
+    gl = new("CompositorNodeGlare")
+    gl.inputs["Type"].default_value = "Fog Glow"
+    gl.inputs["Quality"].default_value = "High"
+    gl.inputs["Threshold"].default_value = 1.2
+    gl.inputs["Strength"].default_value = bloom
+    link(rl.outputs["Image"], gl.inputs["Image"])
+    ld = new("CompositorNodeLensdist")
+    ld.inputs["Distortion"].default_value = 0.0
+    ld.inputs["Dispersion"].default_value = dispersion
+    link(gl.outputs["Image"], ld.inputs["Image"])
+    # vignette: soft ellipse, multiplied in
+    em = new("CompositorNodeEllipseMask")
+    em.inputs["Operation"].default_value = "Multiply"
+    em.inputs["Size"].default_value = (0.92, 0.92)
+    link(rl.outputs["Alpha"], em.inputs["Mask"])
+    bl = new("CompositorNodeBlur")
+    r = 0.22 * max(sc.render.resolution_x, sc.render.resolution_y) * sc.render.resolution_percentage / 100
+    bl.inputs["Size"].default_value = (r, r)
+    link(em.outputs[0], bl.inputs["Image"])
+    k = math_node("MULTIPLY_ADD", bl.outputs[0], vignette, 1.0 - vignette)
+    mx = new("ShaderNodeMix")
+    mx.data_type = "RGBA"
+    mx.blend_type = "MULTIPLY"
+    ins = [i for i in mx.inputs if i.enabled]
+    ins[0].default_value = 1.0
+    link(ld.outputs["Image"], ins[1])
+    link(k, ins[2])
+    out = new("NodeGroupOutput")
+    link([o for o in mx.outputs if o.enabled][0], out.inputs[0])
+    sc.compositing_node_group = ng
+    sc.render.use_compositing = True
+    if hasattr(sc.render, "compositor_device"):
+        sc.render.compositor_device = "CPU"   # headless: no GPU context for the compositor
+    return ng

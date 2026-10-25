@@ -82,7 +82,7 @@ def build(sc, mats, col):
             continue
         side = _water_side(pts, water_polys)          # +1: water on the left
         top = e["top"]
-        bank = "granite_grey" if e["style"] == "bund" else "concrete"
+        bank = "bank_granite" if e["style"] == "bund" else "bank_concrete"
         # vertical bank wall facing the water
         _bank_wall(mb, pts, Z_BED, top, side, bank)
         # parapet set back onto the land side

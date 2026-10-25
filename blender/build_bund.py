@@ -105,6 +105,7 @@ def main():
     cams = stage.cameras(sc)
     w, h = (int(v) for v in a.res.lower().split("x"))
     stage.render_settings(a.samples, (w, h))
+    stage.post_process()
 
     if a.render:
         render_all(a, cams)

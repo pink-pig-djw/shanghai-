@@ -110,18 +110,71 @@ def _statue_chen_yi():
     return mb
 
 
+def _tube_path(mb, pts, radii, mat, n=10, cap=True):
+    """Tapered tube along a 3D polyline (horns, tail, legs)."""
+    from mathutils import Vector
+    P = [Vector(p) for p in pts]
+    rings = []
+    for i, p in enumerate(P):
+        t = (P[min(i + 1, len(P) - 1)] - P[max(i - 1, 0)]).normalized()
+        ref = Vector((0, 0, 1)) if abs(t.z) < 0.9 else Vector((1, 0, 0))
+        u = t.cross(ref).normalized()
+        v = t.cross(u)
+        r = radii[i]
+        rings.append([tuple(p + (u * math.cos(2 * math.pi * k / n) + v * math.sin(2 * math.pi * k / n)) * r)
+                      for k in range(n)])
+    for a, b in zip(rings[:-1], rings[1:]):
+        for k in range(n):
+            j = (k + 1) % n
+            mb.face([a[k], a[j], b[j], b[k]], mat, smooth=True)
+    if cap:
+        mb.face(rings[0][::-1], mat, smooth=True)
+        mb.face(rings[-1], mat, smooth=True)
+
+
 def _bull():
-    """外滩金融牛 (Bund Bull), stylised."""
+    """外滩金融牛 (Bund Bull, 2010, Arturo Di Modica), ~5.2 m long and 3.2 m tall:
+    charging pose with the head lowered, horns forward and the tail whipped up.
+    Head along +X. Proportions are an approximation."""
     mb = U.MeshBuilder()
-    U.box(mb, -1.6, -1.0, 0, 1.6, 1.0, 0.5, "granite_dark")
-    U.sphere(mb, (0, 0, 1.9), 1.0, 16, 10, "bronze", scale_z=0.75)
-    U.lathe(mb, (0, 0, 1.4), [(0.0, 0), (0.9, 0.2), (1.0, 0.6), (0.85, 1.0), (0.0, 1.1)], 14, "bronze",
-            scale_xy=(2.0, 0.85))
-    U.sphere(mb, (1.9, 0, 1.6), 0.45, 12, 8, "bronze")
+    U.box(mb, -2.9, -1.1, 0, 2.9, 1.1, 0.35, "granite_dark")
+    z0 = 0.35
+    # body: elliptical sections along x (x, centre z, half width, half height)
+    secs = [(-2.25, 1.62, 0.20, 0.30), (-2.15, 1.62, 0.42, 0.52), (-1.8, 1.60, 0.58, 0.66),
+            (-1.2, 1.56, 0.66, 0.72), (-0.4, 1.56, 0.72, 0.78), (0.4, 1.66, 0.78, 0.88),
+            (0.95, 1.74, 0.76, 0.92), (1.45, 1.58, 0.62, 0.78), (1.85, 1.30, 0.46, 0.56),
+            (2.15, 1.02, 0.34, 0.40), (2.45, 0.84, 0.25, 0.27), (2.62, 0.76, 0.17, 0.17),
+            (2.68, 0.74, 0.06, 0.06)]
+    n = 18
+    rings = []
+    for x, zc, ry, rz in secs:
+        ring = []
+        for k in range(n):
+            a = 2 * math.pi * k / n
+            # flatter belly, rounder back
+            rr = rz * (0.92 if math.sin(a) < 0 else 1.0)
+            ring.append((x, ry * math.cos(a), z0 + zc + rr * math.sin(a)))
+        rings.append(ring)
+    for a_, b_ in zip(rings[:-1], rings[1:]):
+        for k in range(n):
+            j = (k + 1) % n
+            mb.face([a_[k], a_[j], b_[j], b_[k]], "bronze_red", smooth=True)
+    mb.face(rings[0][::-1], "bronze_red", smooth=True)
+    mb.face(rings[-1], "bronze_red", smooth=True)
+    # legs: front pair braced forward, hind pair pushing back
     for s in (-1, 1):
-        U.cylinder(mb, (2.0, s * 0.3, 1.9), 0.07, 0.6, 6, "bronze", r_top=0.02)
-        for x in (-1.1, 1.1):
-            U.cylinder(mb, (x, s * 0.45, 0.5), 0.15, 1.1, 8, "bronze", r_top=0.12)
+        _tube_path(mb, [(1.05, s * 0.38, z0 + 1.35), (1.35, s * 0.42, z0 + 0.75), (1.55, s * 0.40, z0 + 0.32),
+                        (1.75, s * 0.40, z0 + 0.04)], [0.26, 0.16, 0.11, 0.12], "bronze_red")
+        _tube_path(mb, [(-1.65, s * 0.42, z0 + 1.35), (-1.95, s * 0.44, z0 + 0.85), (-2.3, s * 0.40, z0 + 0.42),
+                        (-2.55, s * 0.40, z0 + 0.04)], [0.32, 0.18, 0.11, 0.12], "bronze_red")
+        # horns: out, forward and up
+        _tube_path(mb, [(2.10, s * 0.24, z0 + 1.24), (2.25, s * 0.55, z0 + 1.32), (2.50, s * 0.74, z0 + 1.52),
+                        (2.78, s * 0.70, z0 + 1.78)], [0.09, 0.075, 0.05, 0.015], "bronze_red", n=8)
+        # ears
+        _tube_path(mb, [(2.0, s * 0.30, z0 + 1.18), (1.96, s * 0.50, z0 + 1.14)], [0.07, 0.03], "bronze_red", n=6)
+    # tail whipped up in an S curve
+    _tube_path(mb, [(-2.2, 0, z0 + 1.85), (-2.45, 0, z0 + 2.15), (-2.35, 0.05, z0 + 2.55), (-2.0, 0.08, z0 + 2.75),
+                    (-1.75, 0.05, z0 + 2.62)], [0.08, 0.06, 0.05, 0.05, 0.09], "bronze_red", n=8)
     return mb
 
 
@@ -188,7 +241,8 @@ def build_all(sc, mats, root):
         if p.get("name") == "外滩牛":
             ob = U.add_obj("Bund_Bull_外滩牛", bull.build("bull", mats), col)
             ob.location = (p["pos"][0], p["pos"][1], sc["levels"]["pave"])
-            ob.rotation_euler = (0, 0, math.radians(200))
+            # in profile against the Pudong skyline in most photos: head to the south (approximate)
+            ob.rotation_euler = (0, 0, math.radians(265))
     print(f"[props] lamps {len(sc.get('lamps', []))}, signals {len(sc.get('signals', []))}, benches {n}")
 
 

@@ -13,7 +13,7 @@ THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 const ASSETS = ['ground', 'bridges', 'landmarks', 'buildings_core', 'buildings_back', 'lujiazui', 'context'];
 const WALKABLE = new Set(['ground', 'bridges']);
-const SUN = { elevation: 15, azimuth: 110 };      // golden early-morning light, as in the Blender renders
+const SUN = { elevation: 19, azimuth: 114 };      // golden early-morning light, as in the Blender renders
 const EYE = 1.65, RADIUS = 0.32, STEP = 0.6, WALK = 1.6, RUN = 4.2, FLY = 30;
 
 const $ = (id) => document.getElementById(id);
@@ -233,6 +233,10 @@ const MATDEF = {
   signal_red: ['emit', '#ff2814', 2.0], signal_green: ['emit', '#28ff78', 2.0], signal_off: ['metal', '#3c3c37', 0.1, 0.2],
   sign_blue: ['flat', '#14469f', 0.4], sign_white: ['flat', '#e6e6e6', 0.4], canopy_glass: ['glass', '#bec8cd'],
   flag_red: ['flat', '#c81419', 0.7], bench_wood: ['flat', '#785232', 0.7], riverbed: ['flat', '#28261e', 1],
+  bank_granite: ['stone', '#9c9a94'], bank_concrete: ['noise', '#94928c', 0.25], bronze_red: ['metal', '#965238', 1.0, 0.32],
+  sign_red: ['flat', '#961919', 0.4], sign_gold: ['metal', '#be9646', 0.8, 0.3], sign_black: ['flat', '#161618', 0.35],
+  sign_green: ['flat', '#195a3c', 0.4], sign_cream: ['flat', '#dccdaa', 0.5], awning_red: ['flat', '#821e1c', 0.8],
+  awning_green: ['flat', '#1e4632', 0.8], rubber: ['flat', '#191919', 0.9],
 };
 
 const matCache = new Map();
@@ -329,7 +333,8 @@ async function fetchBuffer(url, onProgress) {
   }
   let buf = new Uint8Array(got); let o = 0;
   for (const c of chunks) { buf.set(c, o); o += c.length; }
-  if (url.endsWith('.gz') || (buf[0] === 0x1f && buf[1] === 0x8b)) {
+  // gzip magic: decompress here unless the server already did (Content-Encoding: gzip)
+  if (buf[0] === 0x1f && buf[1] === 0x8b) {
     const ds = new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip')));
     buf = new Uint8Array(await ds.arrayBuffer());
   }
@@ -448,8 +453,9 @@ function buildWater() {
     }, false);
     const n = normalFrom(t, 5); n.repeat.set(1 / 18, 1 / 18); return n;
   })();
-  const mat = new THREE.MeshStandardMaterial({ color: 0x3a3e30, roughness: 0.08, metalness: 0.0, normalMap: waterNormal,
-    normalScale: new THREE.Vector2(0.6, 0.6), envMapIntensity: 1.0 });
+  // silt-laden Huangpu water: khaki brown, choppy from the constant boat traffic
+  const mat = new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.07, metalness: 0.0, normalMap: waterNormal,
+    normalScale: new THREE.Vector2(0.85, 0.85), envMapIntensity: 1.0 });
   const z = world.levels.water;
   for (const p of world.water) {
     const sh = new THREE.Shape(p.ext.map(([x, y]) => new THREE.Vector2(x, y)));
@@ -461,7 +467,7 @@ function buildWater() {
     const m = new THREE.Mesh(g, mat); m.position.y = z; m.receiveShadow = true; scene.add(m);
   }
   // wide river beyond the detailed area (context ring has its own water)
-  const bed = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.MeshStandardMaterial({ color: 0x3a3e30, roughness: 0.1, normalMap: waterNormal }));
+  const bed = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.1, normalMap: waterNormal }));
   bed.rotation.x = -Math.PI / 2; bed.position.y = z - 0.05; scene.add(bed);
 }
 

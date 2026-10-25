@@ -228,13 +228,13 @@ def bay_layout(L, bay, win_w, margin=0.6):
     return cols
 
 
-def roof_stuff(mb, ring, z, rnd, big=False):
+def roof_stuff(mb, ring, z, rnd, big=False, per_area=120.0, max_n=8):
     """Rooftop plant: stair/lift housing, AC units, water tanks."""
     xs = [p[0] for p in ring]
     ys = [p[1] for p in ring]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
     area = abs(U.signed_area(ring))
-    n = int(min(8, area / 120)) + (1 if big else 0)
+    n = int(min(max_n, area / per_area)) + (1 if big else 0)
     placed = 0
     for _ in range(n * 6):
         if placed >= n:
@@ -410,8 +410,11 @@ def build_massing(mb, poly, b, rnd, wall_mat, roof_mat="roof_flat"):
     for h in poly.get("holes", []):
         U.walls(mb, U.ccw(h)[::-1], z0, top, wall_mat)
     U.fill(mb, ext, poly.get("holes", []), top, roof_mat)
-    if abs(U.signed_area(ext)) > 200 and top < 120:
+    area = abs(U.signed_area(ext))
+    if area > 200 and top < 120:
         parapet(mb, ext, top, 1.0, 0.3, wall_mat, "concrete_white")
+    if area > 90:
+        roof_stuff(mb, ext, top, rnd, per_area=220.0, max_n=5)
 
 
 def build_all(sc, mats, root, quick=False, web=False):

@@ -147,58 +147,66 @@ def shanghai_tower(mb, cx, cy):
 
 
 def swfc(mb, cx, cy, h0=0.0):
-    """上海环球金融中心 (2008), 492 m, with the trapezoid aperture."""
-    S = 29.0       # half side of the square base
+    """上海环球金融中心 (2008), 492 m.
+
+    A 58 m square prism whose two opposite corners are shaved by arcs, so it
+    narrows into a ~16 m thick blade at the top; the trapezoid aperture sits
+    under the top bridge (Sky Walk, 474 m). Orientation from the OSM parts:
+    base edges at 5.1 deg, the top blade runs along the 50 deg diagonal, so the
+    aperture is seen from the Bund side. Aperture size is approximate.
+    """
+    S = 29.0                      # half side of the base square
     H = 492.0
-    rot = math.radians(45 - 12)   # diagonal orientation of the tower on site
-    sections = []
-    for k in range(40):
-        t = k / 39
-        z = H * 0.9 * t
-        # opposite corners cut by arcs: distance of the cut from the centre
-        d = S * math.sqrt(2) * (1 - t) + 6.0 * t
-        pts = [(-S, -S), (S, -S), (S, S), (-S, S)]
-        poly = _cut_square(S, d)
-        sections.append(_section(poly, 1.0, rot, cx, cy, z))
-    _loft(mb, sections, "curtain_blue", cap=False)
-    top = sections[-1]
-    ztop = H * 0.9
-    # aperture: two legs and a bridge on top
-    poly = _cut_square(S, 6.0)
-    for side in (-1, 1):
-        leg = [(x, y) for x, y in poly]
-        leg = [(x, y * 0.5 + side * S * 0.5) if True else (x, y) for x, y in leg]
-        bot = _section(leg, 1.0, rot, cx, cy, ztop)
-        topr = _section(leg, 1.0, rot, cx, cy, H - 6)
-        _loft(mb, [bot, topr], "curtain_blue", cap=False)
-    beam = _section(poly, 1.0, rot, cx, cy, H - 6)
-    beam2 = _section(poly, 1.0, rot, cx, cy, H)
-    _loft(mb, [beam, beam2], "metal_grey", cap=True)
-    mb.face(top, "roof_flat")
+    rot = math.radians(95.1)      # local (1,-1) diagonal -> 50.1 deg
+    D0 = S * math.sqrt(2) - 0.05  # corner cut distance at the base (barely cut)
+    DT = 8.0                      # half thickness of the blade at the top
+    za0, za1 = 436.0, 474.0       # aperture bottom / top (bridge underside)
+    w0, w1 = 38.0, 50.0           # aperture width at bottom / top (trapezoid)
+
+    def d_at(z):
+        return D0 - (D0 - DT) * (z / H) ** 2
+
+    def sec(poly, z):
+        return _section(poly, 1.0, rot, cx, cy, h0 + z)
+
+    body = [sec(_cut_square(S, d_at(z)), z) for z in (za0 * k / 30 for k in range(31))]
+    _loft(mb, body, "curtain_silver", cap=False)
+    mb.face(body[-1], "metal_grey")          # floor of the aperture
+    q = 1 / math.sqrt(2)
+    for sgn in (1, -1):
+        # leg: blade section minus the aperture band |b| < w/2, b = (x - y)/sqrt(2)
+        secs = [sec(_clip(_cut_square(S, d_at(z)), -sgn * q, sgn * q, -w / 2), z)
+                for z, w in ((za0, w0), (za1, w1))]
+        if len(secs[0]) != len(secs[1]):
+            secs[1] = [(x, y, h0 + za1) for x, y, _ in secs[0]]
+        _loft(mb, secs, "curtain_silver", cap=False)
+    bridge = [sec(_cut_square(S, d_at(z)), z) for z in (za1, (za1 + H) / 2, H)]
+    mb.face(bridge[0][::-1], "metal_grey")   # underside of the Sky Walk bridge
+    _loft(mb, bridge, "curtain_silver", cap=False)
+    mb.face(bridge[-1], "roof_flat")
+
+
+def _clip(poly, a, b, c):
+    """Sutherland-Hodgman: keep the part of poly with a*x + b*y <= c."""
+    res = []
+    n = len(poly)
+    for i in range(n):
+        p, r = poly[i], poly[(i + 1) % n]
+        fp = a * p[0] + b * p[1] - c
+        fr = a * r[0] + b * r[1] - c
+        if fp <= 0:
+            res.append(p)
+        if (fp < 0) != (fr < 0) and fp != fr:
+            t = fp / (fp - fr)
+            res.append((p[0] + (r[0] - p[0]) * t, p[1] + (r[1] - p[1]) * t))
+    return res
 
 
 def _cut_square(S, d):
     """Square of half-side S with the +x+y and -x-y corners cut at distance d from the centre."""
-    pts = []
-    corners = [(S, -S), (S, S), (-S, S), (-S, -S)]
-    out = []
-    for (x0, y0), (x1, y1) in zip(corners, corners[1:] + corners[:1]):
-        out.append((x0, y0))
-    # clip against the lines x + y <= d*sqrt2 and x + y >= -d*sqrt2
-    poly = corners
+    poly = [(S, -S), (S, S), (-S, S), (-S, -S)]
     for sgn in (1, -1):
-        res = []
-        n = len(poly)
-        for i in range(n):
-            p, q = poly[i], poly[(i + 1) % n]
-            fp = sgn * (p[0] + p[1]) - d * math.sqrt(2)
-            fq = sgn * (q[0] + q[1]) - d * math.sqrt(2)
-            if fp <= 0:
-                res.append(p)
-            if (fp < 0) != (fq < 0) and fp != fq:
-                t = fp / (fp - fq)
-                res.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
-        poly = res
+        poly = _clip(poly, sgn, sgn, d * math.sqrt(2))
     return poly
 
 

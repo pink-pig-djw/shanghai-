@@ -219,6 +219,20 @@ class NB:
         return col
 
 
+def _tidal(nb, col, rough, uv, base, high):
+    """Wet, algae-stained band below the high-water mark (wall uv.y is absolute z)."""
+    sep = nb.n("ShaderNodeSeparateXYZ")
+    nb.link(uv, sep.inputs[0])
+    edge = nb.math("ADD", high, nb.math("MULTIPLY", nb.noise(uv, 0.7, 3), 0.5))
+    f = nb.math("DIVIDE", nb.math("SUBTRACT", edge, nb.o(sep, "Y")), 0.35)
+    f = nb.math("MINIMUM", nb.math("MAXIMUM", f, 0.0), 1.0)
+    wet = nb.mix(nb.math("MULTIPLY", nb.noise(uv, 1.3, 3), 0.8), mix_rgb(base, lin((34, 38, 26)), 0.82),
+                 mix_rgb(base, lin((58, 56, 40)), 0.7))
+    col = nb.mix(f, col, wet)
+    rough = nb.mix(f, rough, 0.32) if not isinstance(rough, (int, float)) else nb.mix(f, (rough,) * 3 + (1.0,), (0.32, 0.32, 0.32, 1.0))
+    return col, rough
+
+
 def new_mat(name):
     m = bpy.data.materials.get(name)
     if m is None:
@@ -232,7 +246,7 @@ def new_mat(name):
 # --------------------------------------------------------------------------
 
 def stone(name, rgb, var=0.12, rough=0.62, block=(1.1, 0.48), joint=0.006, streaks=0.18,
-          rustic=False, speckle=0.06):
+          rustic=False, speckle=0.06, tidal=None):
     """Ashlar facade stone (granite / sandstone) with weathering streaks."""
     m = new_mat(name)
     nb = NB(m)
@@ -277,6 +291,8 @@ def stone(name, rgb, var=0.12, rough=0.62, block=(1.1, 0.48), joint=0.006, strea
     nrm = nb.bump(h, 0.35 if not rustic else 0.9, 0.01 if not rustic else 0.03)
     r = nb.math("ADD", rough, nb.math("MULTIPLY", st, 0.12))
     col = nb.grime(col, uv, base)
+    if tidal is not None:
+        col, r = _tidal(nb, col, r, uv, base, tidal)
     nb.output(nb.bsdf(col, r, normal=nrm, spec=0.35))
     return m
 
@@ -419,6 +435,12 @@ def window_glass(name, frame_rgb=(235, 232, 225), panes=(2, 3), tint=(30, 36, 40
     rough = nb.mix(frame, 0.04, 0.5)
     spec = nb.math("ADD", nb.math("MULTIPLY", nb.math("SUBTRACT", 1.0, frame), 0.6), 0.4)
     nrm = nb.bump(frame, 0.6, 0.01)
+    # no two panes sit exactly in plane: a random tilt of a degree or two per
+    # window makes the reflected sky vary from window to window
+    r2 = nb.math("FRACT", nb.math("MULTIPLY", rnd, 7.31))
+    tilt = nb.math("ADD", nb.math("MULTIPLY", nb.math("SUBTRACT", rnd, 0.5), u),
+                   nb.math("MULTIPLY", nb.math("SUBTRACT", r2, 0.5), v))
+    nrm = nb.bump(tilt, 1.0, 0.07, normal=nrm)
     nb.output(nb.bsdf(col, rough, normal=nrm, spec=spec, Coat_Weight=nb.math("SUBTRACT", 1.0, frame)))
     return m
 
@@ -455,7 +477,12 @@ def curtain_wall(name, glass=(60, 80, 95), mullion=(150, 155, 160), spandrel=(70
     col = nb.mix(frame, col, lin(mullion))
     rough = nb.mix(nb.math("MAXIMUM", frame, span), nb.math("ADD", 0.02, nb.math("MULTIPLY", pv, 0.06)), 0.45)
     metal = nb.mix(frame, 0.0, 0.8)
-    nb.output(nb.bsdf(col, rough, metal=metal, spec=reflect))
+    # slightly warped panels ("oil canning"): per-panel tilt breaks up reflections
+    pv2 = nb.math("FRACT", nb.math("MULTIPLY", pv, 13.7))
+    tilt = nb.math("ADD", nb.math("MULTIPLY", nb.math("SUBTRACT", pv, 0.5), fu),
+                   nb.math("MULTIPLY", nb.math("SUBTRACT", pv2, 0.5), fv))
+    nrm = nb.bump(tilt, 1.0, 0.08)
+    nb.output(nb.bsdf(col, rough, metal=metal, spec=reflect, normal=nrm))
     return m
 
 
@@ -572,24 +599,40 @@ def grass(name="grass", rgb=(78, 112, 48)):
 
 
 def water(name="water_huangpu"):
+    """Huangpu River: turbid, sediment-laden brown-grey water.
+
+    Bump only (no displacement): a long swell from ship wakes, wind chop in
+    distorted bands roughly across the flow, and fine ripples. Enough slope
+    variance that reflections break up into short streaks like on the real
+    river, which is never mirror-calm with the constant boat traffic.
+    """
     m = new_mat(name)
     nb = NB(m)
     uv = nb.uv()
-    # long gentle swell + ripples
-    w1 = nb.noise(nb.vmath("MULTIPLY", uv, (0.08, 0.16, 1.0)), 1.0, 4, 0.55)
-    w15 = nb.noise(nb.vmath("MULTIPLY", uv, (0.35, 0.5, 1.0)), 1.0, 4, 0.6)
-    w2 = nb.noise(uv, 1.6, 3, 0.5)
-    w3 = nb.noise(uv, 9.0, 2, 0.5)
-    h = nb.math("ADD", nb.math("ADD", w1, nb.math("MULTIPLY", w15, 0.6)),
-                nb.math("ADD", nb.math("MULTIPLY", w2, 0.35), nb.math("MULTIPLY", w3, 0.1)))
-    nrm = nb.bump(h, 0.42, 0.22)
-    base = lin((52, 58, 42))
-    col = nb.mix(nb.math("MULTIPLY", nb.noise(uv, 0.01, 2), 0.6), base, lin((70, 64, 46)))
-    nb.output(nb.bsdf(col, nb.math("ADD", 0.07, nb.math("MULTIPLY", w2, 0.08)), normal=nrm, spec=0.55, IOR=1.333))
+    w1 = nb.noise(nb.vmath("MULTIPLY", uv, (0.035, 0.07, 1.0)), 1.0, 3, 0.5)
+    wv = nb.n("ShaderNodeTexWave", wave_type="BANDS", bands_direction="DIAGONAL")
+    nb.set(wv, "Scale", 0.22)
+    nb.set(wv, "Distortion", 9.0)
+    nb.set(wv, "Detail", 3.0)
+    nb.set(wv, "Detail Scale", 1.4)
+    nb.set(wv, "Detail Roughness", 0.55)
+    nb.link(uv, nb.i(wv, "Vector"))
+    w2 = nb.noise(nb.vmath("MULTIPLY", uv, (0.5, 0.9, 1.0)), 1.0, 4, 0.6)
+    w3 = nb.noise(uv, 2.6, 3, 0.55)
+    w4 = nb.noise(uv, 9.0, 2, 0.5)
+    h = nb.math("ADD", nb.math("MULTIPLY", w1, 0.9), nb.math("MULTIPLY", nb.o(wv, "Factor"), 0.32))
+    h = nb.math("ADD", h, nb.math("MULTIPLY", w2, 0.55))
+    h = nb.math("ADD", h, nb.math("ADD", nb.math("MULTIPLY", w3, 0.28), nb.math("MULTIPLY", w4, 0.1)))
+    nrm = nb.bump(h, 0.62, 0.32)
+    # silt-laden water: khaki brown, patches of slightly greener water
+    base = lin((80, 74, 54))
+    col = nb.mix(nb.math("MULTIPLY", nb.noise(uv, 0.006, 2), 0.7), base, lin((66, 70, 52)))
+    rough = nb.math("ADD", 0.035, nb.math("MULTIPLY", nb.noise(uv, 0.05, 2), 0.09))
+    nb.output(nb.bsdf(col, rough, normal=nrm, spec=0.5, IOR=1.333))
     return m
 
 
-def concrete(name, rgb=(150, 148, 142), rough=0.85, stain=0.3):
+def concrete(name, rgb=(150, 148, 142), rough=0.85, stain=0.3, tidal=None):
     m = new_mat(name)
     nb = NB(m)
     uv = nb.uv()
@@ -604,6 +647,8 @@ def concrete(name, rgb=(150, 148, 142), rough=0.85, stain=0.3):
     col = nb.mix(nb.math("MULTIPLY", st, stain * 3), col, mix_rgb(base, (0.02, 0.02, 0.02), 0.6))
     nrm = nb.bump(nb.noise(uv, 40.0, 4, 0.7), 0.15, 0.004)
     col = nb.grime(col, uv, base, amount=0.4, splash=0.2)
+    if tidal is not None:
+        col, rough = _tidal(nb, col, rough, uv, base, tidal)
     nb.output(nb.bsdf(col, rough, normal=nrm, spec=0.35))
     return m
 
@@ -718,6 +763,9 @@ def build_all():
     concrete("concrete", (158, 156, 150))
     concrete("concrete_dark", (110, 108, 104))
     concrete("concrete_white", (210, 210, 205), stain=0.2)
+    # river walls: dark tidal band up to about mean high water (water plane at z=-1.8)
+    stone("bank_granite", (160, 158, 152), tidal=-0.5)
+    concrete("bank_concrete", (150, 148, 142), tidal=-0.5)
     window_glass("window_hist_white", (232, 228, 218), panes=(2, 3))
     window_glass("window_hist_dark", (40, 46, 42), panes=(2, 3))
     window_glass("window_hist_green", (52, 76, 60), panes=(2, 4))
@@ -758,6 +806,7 @@ def build_all():
     painted_metal("steel_bridge", (128, 132, 132), metal=0.35, rough=0.45)
     simple("steel_stainless", (190, 192, 195), rough=0.25, metal=1.0)
     simple("bronze", (110, 80, 50), rough=0.4, metal=1.0)
+    simple("bronze_red", (150, 82, 56), rough=0.32, metal=1.0)
     simple("gold", (210, 170, 80), rough=0.3, metal=1.0)
     simple("glass_clear", (200, 210, 215), rough=0.02, spec=0.5, Transmission_Weight=1.0)
     simple("glass_dark", (20, 24, 28), rough=0.05, spec=0.7)
