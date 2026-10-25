@@ -186,10 +186,12 @@ def merge_by_material(coll_name, cell):
 
 def gltfpack(src, dst):
     """Weld vertices, quantize positions (KHR_mesh_quantization, decoded natively by
-    three.js - no WebAssembly needed) and gzip. UVs stay float: they are in metres."""
+    three.js - no WebAssembly needed) and gzip. UVs stay float: they are in metres.
+    -kv: the exported materials carry no textures (the browser paints its own), so
+    without it gltfpack drops the texture coordinates as unused."""
     exe = os.environ.get("GLTFPACK", "gltfpack")
     tmp = dst + ".tmp.glb"
-    cmd = [exe, "-i", src, "-o", tmp, "-km", "-kn", "-vp", "16", "-vtf", "-vn", "8"]
+    cmd = [exe, "-i", src, "-o", tmp, "-km", "-kn", "-kv", "-vp", "16", "-vtf", "-vn", "8"]
     try:
         subprocess.run(cmd, check=True, capture_output=True)
         os.remove(src)
@@ -309,6 +311,10 @@ def main():
         o = bpy.data.objects.get(name)
         if o:
             bpy.data.objects.remove(o)
+    # MeshBuilder writes one vertex per face corner: weld (as build_bund.py does) so
+    # domes, columns and clipped shrubs shade smooth in the browser too
+    n0, n1 = U.weld_all(min_verts=0)
+    print(f"[web] welded {n0} -> {n1} vertices ({time.time() - t0:.0f}s)")
     parts = {
         "ground": "Ground_Roads_Water",
         "buildings_core": "Buildings_Bund_Core",

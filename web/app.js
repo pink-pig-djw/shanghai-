@@ -155,19 +155,20 @@ function texRoofTiles(base, { glazed = false, size = 2.0, pitch = 0.25, seed = 5
 function texWindow(frame, { panes = [2, 3], interior = 'mix', seed = 6 } = {}) {
   // 4 variants in a 2x2 atlas: plain dark, curtains, blinds, lit; the per-face
   // variant comes from the material suffix assigned at export time.
+  // slim frames and dark rooms: from the street, daytime windows read dark
   const f = hex(frame); const N = 256;
   return [0, 1, 2, 3].map((variant) => paint(N, N, (u, v) => {
-    const fw = 0.055;
+    const fw = 0.04;
     let fr = u < fw || u > 1 - fw || v < fw * 0.8 || v > 1 - fw * 0.8;
-    if (panes[0] > 1) { const mu = (u * panes[0]) % 1; fr = fr || mu < 0.025 * panes[0] || mu > 1 - 0.025 * panes[0]; }
-    if (panes[1] > 1) { const mv = (v * panes[1]) % 1; fr = fr || mv < 0.018 * panes[1] || mv > 1 - 0.018 * panes[1]; }
+    if (panes[0] > 1) { const mu = (u * panes[0]) % 1; fr = fr || mu < 0.016 * panes[0] || mu > 1 - 0.016 * panes[0]; }
+    if (panes[1] > 1) { const mv = (v * panes[1]) % 1; fr = fr || mv < 0.012 * panes[1] || mv > 1 - 0.012 * panes[1]; }
     if (fr) return [f[0], f[1], f[2], 255, 1];
-    let c = [22, 24, 26];
-    const sky = mixc([70, 85, 100], [150, 165, 180], v);           // faint sky reflection
-    if (variant === 1) c = v > 0.35 ? [160, 142, 112] : [30, 30, 30];
-    if (variant === 2) c = (v * 30) % 1 < 0.5 ? [190, 188, 178] : [150, 148, 140];
-    if (variant === 3) c = [120, 112, 92];
-    c = mixc(c, sky, 0.22);
+    let c = [20, 22, 24];
+    const sky = mixc([60, 72, 86], [120, 134, 150], v);           // faint sky reflection
+    if (variant === 1) c = v > 0.35 ? [112, 98, 78] : [26, 26, 26];
+    if (variant === 2) c = (v * 30) % 1 < 0.5 ? [120, 118, 110] : [92, 90, 84];
+    if (variant === 3) c = [92, 86, 70];
+    c = mixc(c, sky, 0.12);
     return [c[0], c[1], c[2], 255, 0];
   }));
 }
@@ -287,12 +288,12 @@ function makeMaterial(name) {
     }
     case 'window': {
       const ts = T(() => texWindow(def[1], { panes: def[2] }));
-      m = new THREE.MeshStandardMaterial({ map: ts[variant % 4], roughness: 0.12, metalness: 0.1, envMapIntensity: 1.2 }); break;
+      m = reflective(new THREE.MeshStandardMaterial({ map: ts[variant % 4], roughness: 0.12, metalness: 0.1 }), 0.45); break;
     }
     case 'curtain': {
       const t = T(() => texCurtain(def[1], def[2], def[3]));
       t.repeat.set(1 / 3.0, 1 / 7.6);
-      m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.12, metalness: 0.55, envMapIntensity: 1.3 }); break;
+      m = reflective(new THREE.MeshStandardMaterial({ map: t, roughness: 0.12, metalness: 0.55 }), 1.3); break;
     }
     case 'punched': {
       const o = def[3] || {};
@@ -322,8 +323,8 @@ function makeMaterial(name) {
       const t = T(() => texNoise(def[1], { varr: 0.35, fine: 0.25, dark: [10, 20, 5], seed: 13 }), 3);
       m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.95 }); break;
     }
-    case 'metal': m = new THREE.MeshStandardMaterial({ color: def[1], metalness: def[2], roughness: def[3] }); break;
-    case 'glass': m = new THREE.MeshStandardMaterial({ color: def[1], metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.35 }); break;
+    case 'metal': m = reflective(new THREE.MeshStandardMaterial({ color: def[1], metalness: def[2], roughness: def[3] })); break;
+    case 'glass': m = reflective(new THREE.MeshStandardMaterial({ color: def[1], metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.35 })); break;
     case 'emit': m = new THREE.MeshStandardMaterial({ color: def[1], emissive: def[1], emissiveIntensity: def[2], roughness: 0.3 }); break;
     default: m = new THREE.MeshStandardMaterial({ color: def[1], roughness: def[2] ?? 0.6 });
   }
@@ -397,6 +398,26 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.AgXToneMapping ?? THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.75;
+// AgX with a look like the renders' "Medium High Contrast": three.js ships AgX
+// without looks, which leaves sunlit stone milky and flat. As in Blender's OCIO
+// config the contrast pivots on middle grey in AgX's log encoding, before the
+// sigmoid; a little saturation goes on after it.
+const LOOK = { contrast: 1.25, saturation: 1.0 };
+{
+  const src = THREE.ShaderChunk.tonemapping_pars_fragment;
+  const i0 = src.indexOf('vec3 AgXToneMapping('), i1 = src.indexOf('vec3 NeutralToneMapping(');
+  const sig = 'color = agxDefaultContrastApprox( color );';
+  const custom = 'vec3 CustomToneMapping( vec3 color ) { return color; }';
+  if (i0 >= 0 && i1 > i0 && src.slice(i0, i1).includes(sig) && src.includes(custom)) {
+    const grey = ((Math.log2(0.18) + 12.47393) / (4.026069 + 12.47393)).toFixed(4);   // 0.18 in AgX log
+    const agx = src.slice(i0, i1).replace('vec3 AgXToneMapping(', 'vec3 AgXLookToneMapping(').replace(sig,
+      `color = clamp( ( color - ${grey} ) * ${LOOK.contrast.toFixed(3)} + ${grey}, 0.0, 1.0 );\n\t${sig}\n` +
+      `\tcolor = mix( vec3( dot( color, vec3( 0.2126, 0.7152, 0.0722 ) ) ), color, ${LOOK.saturation.toFixed(3)} );`);
+    THREE.ShaderChunk.tonemapping_pars_fragment = src.replace(custom,
+      `${agx}vec3 CustomToneMapping( vec3 color ) { return AgXLookToneMapping( color ); }`);
+    renderer.toneMapping = THREE.CustomToneMapping;
+  }
+}
 renderer.shadowMap.enabled = !LOW;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.shadowMap.autoUpdate = false;          // re-rendered only when the player has moved (see frame)
@@ -414,30 +435,60 @@ const sunDir = new THREE.Vector3();
   sunDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
 }
 const sky = new Sky(); sky.scale.setScalar(20000);
-sky.material.uniforms.turbidity.value = 4.5;
-sky.material.uniforms.rayleigh.value = 1.6;
+sky.material.uniforms.turbidity.value = 7;           // Shanghai's hazy blue, not an alpine one
+sky.material.uniforms.rayleigh.value = 1.3;
 sky.material.uniforms.mieCoefficient.value = 0.005;
 sky.material.uniforms.mieDirectionalG.value = 0.8;
 sky.material.uniforms.sunPosition.value.copy(sunDir);
-const sun = new THREE.DirectionalLight(0xffcc98, 3.2);   // low, warm morning sun as in the renders
+if (sky.material.uniforms.cloudCoverage) {        // fair weather: small, thin clouds as in the renders
+  Object.assign(sky.material.uniforms.cloudCoverage, { value: 0.2 });
+  Object.assign(sky.material.uniforms.cloudScale, { value: 0.0004 });
+  Object.assign(sky.material.uniforms.cloudDensity, { value: 0.25 });
+}
+// Light as in the Blender scene: a strong, warm, low sun lamp is the key light and
+// the sky (strength 0.05 there) only a cool fill
+// (its colour is the Blender lamp's, which is scene-linear: as an sRGB hex it came out twice as orange)
+const sun = new THREE.DirectionalLight(new THREE.Color().setRGB(1.0, 0.8, 0.6, THREE.LinearSRGBColorSpace), 3.1);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 // wide enough that the cached shadow map still covers the view after a few metres of walking
 Object.assign(sun.shadow.camera, { left: -150, right: 150, top: 150, bottom: -150, near: 1, far: 900 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
-scene.add(new THREE.HemisphereLight(0xb4c8e0, 0x5e594c, 0.45));
+const hemi = new THREE.HemisphereLight(0xb4c8e0, 0x6a6050, 1.4);   // sky above, sunlit paving below
+scene.add(hemi);
+// The sky never changes: render the atmosphere shader once into a cube map for the
+// background and a prefiltered copy for reflections (glass, water, metal). It is not
+// the scene's environment light: three's sky has a bright circumsolar halo and a
+// glowing lower half, and as diffuse light it outshone the sun twelvefold, leaving
+// every facade flat and white.
+const SKY_LEVEL = 0.4;          // sky brightness relative to the sun, matched to the renders
+// The renders look through a 30 km haze volume: a grey veil over the sky, thin
+// overhead and thick at the horizon (three's sky alone is an alpine deep blue with
+// a white horizon, which the river then mirrors)
+const VEIL = { color: [0.72, 0.72, 0.7], zenith: 0.35, horizon: 0.65 };
+let ENV = null;
 {
-  // the sky never changes: render the atmosphere shader once into a cube map
-  // (background) and a prefiltered environment, instead of every frame
   const skyScene = new THREE.Scene(); skyScene.add(sky);
+  skyScene.add(new THREE.Mesh(new THREE.SphereGeometry(5000, 32, 16), new THREE.ShaderMaterial({
+    side: THREE.BackSide, transparent: true, depthWrite: false, depthTest: false,
+    uniforms: { veil: { value: new THREE.Vector3(...VEIL.color) }, a0: { value: VEIL.zenith }, a1: { value: VEIL.horizon } },
+    vertexShader: 'varying vec3 vDir;\nvoid main() { vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }',
+    fragmentShader: 'uniform vec3 veil; uniform float a0, a1; varying vec3 vDir;\n'
+      + 'void main() { float y = max( normalize( vDir ).y, 0.0 ); gl_FragColor = vec4( veil, mix( a1, a0, pow( y, 0.6 ) ) ); }',
+  })));
   const cubeRT = new THREE.WebGLCubeRenderTarget(LOW ? 256 : 512, { type: THREE.HalfFloatType });
   new THREE.CubeCamera(1, 30000, cubeRT).update(renderer, skyScene);
   scene.background = cubeRT.texture;
+  scene.backgroundIntensity = SKY_LEVEL;
+  // reflections leave the sun disc out: its glint comes from the DirectionalLight
+  if (sky.material.uniforms.showSunDisc) sky.material.uniforms.showSunDisc.value = 0;
   const pm = new THREE.PMREMGenerator(renderer);
-  scene.environment = pm.fromScene(skyScene, 0, 0.1, 30000).texture;
+  ENV = pm.fromScene(skyScene, 0, 0.1, 30000).texture;
   pm.dispose();
 }
+// reflective materials see the sky at the brightness the background shows it
+const reflective = (m, k = 1) => { m.envMap = ENV; m.envMapIntensity = SKY_LEVEL * k; return m; };
 
 let world = null;
 const walkMeshes = [];
@@ -513,8 +564,8 @@ function buildWater() {
     const n = normalFrom(t, 5); n.repeat.set(1 / 18, 1 / 18); return n;
   })();
   // silt-laden Huangpu water: khaki brown, choppy from the constant boat traffic
-  const mat = new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.07, metalness: 0.0, normalMap: waterNormal,
-    normalScale: new THREE.Vector2(0.85, 0.85), envMapIntensity: 1.0 });
+  const mat = reflective(new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.1, metalness: 0.0, normalMap: waterNormal,
+    normalScale: new THREE.Vector2(0.85, 0.85) }), 0.6);
   const z = world.levels.water;
   const parts = [];
   for (const p of world.water) {
@@ -529,40 +580,114 @@ function buildWater() {
   const m = new THREE.Mesh(mergeGeoms(parts), mat); m.position.y = z; m.receiveShadow = true;
   m.matrixAutoUpdate = false; m.updateMatrix(); scene.add(m);
   // wide river beyond the detailed area (context ring has its own water)
-  const bed = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.1, normalMap: waterNormal }));
+  const bed = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), reflective(new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.12, normalMap: waterNormal }), 0.6));
   bed.rotation.x = -Math.PI / 2; bed.position.y = z - 0.05; scene.add(bed);
 }
 
 // ---------------------------------------------------------------------------
-// trees (instanced): trunk + clustered leaf blobs with an alpha-tested leaf texture
+// trees (instanced): forked trunk with bark + a crown of alpha-tested leaf cards
 // ---------------------------------------------------------------------------
-function leafTexture(c1, c2, seed) {
-  const a = hex(c1), b = hex(c2);
-  const t = paint(256, 256, (u, v, px, py) => {
-    const n = fbm(u * 10, v * 10, seed, 10, 3);
-    const cell = hash(Math.floor(u * 24), Math.floor(v * 24), seed);
-    const alpha = n + cell * 0.35 > 0.62 ? 255 : 0;
-    const c = mixc(a, b, cell);
-    return [c[0], c[1], c[2], alpha];
+const TREE = {
+  // London plane (悬铃木): flaking camouflage bark, broad crown, leaves just turning;
+  // camphor (香樟): evergreen, dark glossy, low dense dome; ginkgo (银杏): slim, fan leaves yellowing
+  plane: { trunkH: 3.0, crownY: 9.2, R: 4.8, Ry: 4.0, cards: 110, card: 2.6, limbs: 3, leaf: 'lobed',
+    leaves: ['#4c6a28', '#5a762c', '#6a8030', '#87883a', '#9a8a3c'] },
+  camphor: { trunkH: 2.2, crownY: 7.0, R: 4.6, Ry: 3.4, cards: 110, card: 2.3, limbs: 4, leaf: 'oval',
+    leaves: ['#26421e', '#30502a', '#3e602c', '#4f7032'] },
+  ginkgo: { trunkH: 3.4, crownY: 8.6, R: 2.7, Ry: 4.4, cards: 70, card: 2.0, limbs: 0, leaf: 'fan',
+    leaves: ['#7e8c30', '#9aa034', '#b8aa3a', '#cdb444'] },
+};
+function leafCardTexture(kind) {
+  // a sprig of leaves on a transparent card, drawn with canvas paths
+  const spec = TREE[kind]; const S = 256;
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  const ctx = c.getContext('2d');
+  let s = kind.length * 7919 + 17; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  ctx.strokeStyle = 'rgb(70,58,40)'; ctx.lineWidth = 2;                   // twigs
+  for (let i = 0; i < 5; i++) {
+    const a = rnd() * Math.PI * 2; ctx.beginPath(); ctx.moveTo(S / 2, S / 2);
+    ctx.lineTo(S * (0.5 + Math.cos(a) * 0.36), S * (0.5 + Math.sin(a) * 0.36)); ctx.stroke();
+  }
+  for (let i = 0; i < (spec.leaf === 'fan' ? 80 : 64); i++) {
+    const r = Math.sqrt(rnd()) * 0.4, a = rnd() * Math.PI * 2;
+    const [cr, cg, cb] = hex(spec.leaves[Math.floor(rnd() * spec.leaves.length)]);
+    const k = 0.72 + 0.4 * rnd() - 0.22 * (1 - r / 0.4);       // leaves deeper in the sprig are darker
+    ctx.fillStyle = `rgb(${Math.min(255, cr * k) | 0},${Math.min(255, cg * k) | 0},${Math.min(255, cb * k) | 0})`;
+    ctx.save(); ctx.translate((0.5 + Math.cos(a) * r) * S, (0.5 + Math.sin(a) * r) * S); ctx.rotate(rnd() * Math.PI * 2);
+    const L = S * (spec.leaf === 'fan' ? 0.07 : 0.085) * (0.75 + 0.5 * rnd());
+    if (spec.leaf === 'fan') { ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, L, -0.9, 0.9); ctx.closePath(); ctx.fill(); }
+    else if (spec.leaf === 'lobed') {
+      for (const t of [-0.8, 0, 0.8]) { ctx.beginPath(); ctx.ellipse(Math.cos(t) * L * 0.35, Math.sin(t) * L * 0.35, L * 0.6, L * 0.34, t, 0, Math.PI * 2); ctx.fill(); }
+    } else { ctx.beginPath(); ctx.ellipse(0, 0, L, L * 0.42, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = MAX_ANISO;
+  return t;
+}
+function barkTexture(kind) {
+  const t = paint(128, 256, (u, v) => {
+    const n = fbm(u * 4, v * 8, 41, 4, 3), m = fbm(u * 8, v * 16, 42, 8, 2);
+    let c;
+    if (kind === 'plane') c = n > 0.55 ? [192, 184, 150] : (m > 0.52 ? [112, 114, 90] : [150, 145, 122]);   // flaking patches
+    else {
+      const f = Math.abs(Math.sin((u * 10 + n * 2.5) * Math.PI));                               // vertical furrows
+      c = mixc(kind === 'ginkgo' ? [110, 104, 92] : [86, 74, 62], [34, 30, 26], Math.pow(1 - f, 4) * 0.8 + 0.15 * m);
+    }
+    c = mixc(c, [40, 38, 32], 0.25 * m);
+    return [c[0], c[1], c[2], 255];
   });
+  t.repeat.set(1, 2);
   return t;
 }
 function treeGeometry(kind) {
-  const trunkH = { plane: 3.2, camphor: 2.4, ginkgo: 4 }[kind];
-  const trunk = new THREE.CylinderGeometry(0.22, 0.32, trunkH + 1.5, 7); trunk.translate(0, (trunkH + 1.5) / 2 - 0.2, 0);
-  const crowns = [];
-  const R = { plane: 4.6, camphor: 4.4, ginkgo: 2.6 }[kind];
-  const H = { plane: 14, camphor: 11, ginkgo: 13 }[kind];
-  const n = kind === 'ginkgo' ? 5 : 7;
-  for (let i = 0; i < n; i++) {
-    const g = new THREE.IcosahedronGeometry(R * (0.55 + 0.25 * hash(i, 1, kind.length)), 1);
-    const a = i / n * Math.PI * 2;
-    const r = i === 0 ? 0 : R * 0.45;
-    const y = kind === 'ginkgo' ? trunkH + (H - trunkH) * (0.2 + 0.65 * i / n) : trunkH + (H - trunkH) * (0.45 + 0.25 * hash(i, 3, 7));
-    g.translate(Math.cos(a) * r, y, Math.sin(a) * r);
-    crowns.push(g);
+  const spec = TREE[kind];
+  let s = kind.length * 104729 + 3; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  // trunk and the main limbs forking into the crown
+  const parts = [];
+  const trunk = new THREE.CylinderGeometry(0.2, 0.3, spec.trunkH + 0.4, 8, 1, true); trunk.translate(0, (spec.trunkH + 0.4) / 2 - 0.2, 0);
+  parts.push(trunk);
+  const up = new THREE.Vector3(0, 1, 0);
+  const limbs = spec.limbs || 1;
+  for (let i = 0; i < limbs; i++) {
+    const a = (i / limbs + rnd() * 0.2) * Math.PI * 2;
+    const tip = spec.limbs ? new THREE.Vector3(Math.cos(a) * spec.R * 0.5, spec.crownY + 0.5, Math.sin(a) * spec.R * 0.5)
+      : new THREE.Vector3(0, spec.crownY + spec.Ry * 0.8, 0);                     // ginkgo: a central leader
+    const base = new THREE.Vector3(0, spec.trunkH - 0.2, 0);
+    const d = tip.clone().sub(base); const len = d.length();
+    const g = new THREE.CylinderGeometry(0.08, 0.17, len, 6, 1, true); g.translate(0, len / 2, 0);
+    g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, d.normalize())); g.translate(base.x, base.y, base.z);
+    parts.push(g);
   }
-  return { trunk, crown: mergeGeoms(crowns) };
+  // leaf cards in an ellipsoid shell, front faces turned outward, normals bent
+  // outward so the crown shades like a volume; each card twice (both windings)
+  const pos = [], nor = [], uv = [];
+  const C = new THREE.Vector3(0, spec.crownY, 0);
+  const n = new THREE.Vector3(), t1 = new THREE.Vector3(), t2 = new THREE.Vector3(), p = new THREE.Vector3(), o = new THREE.Vector3();
+  for (let i = 0; i < spec.cards; i++) {
+    const z = rnd() * 2 - 1, a = rnd() * Math.PI * 2, q = Math.sqrt(1 - z * z);
+    const f = 0.5 + 0.5 * Math.cbrt(rnd());
+    const taper = spec.leaf === 'fan' ? 1 - 0.35 * Math.max(0, z) : 1;           // ginkgo narrows upwards
+    p.set(Math.cos(a) * q * spec.R * f * taper, spec.crownY + z * spec.Ry * f, Math.sin(a) * q * spec.R * f * taper);
+    o.copy(p).sub(C).normalize();
+    n.set(o.x + (rnd() - 0.5) * 1.4, o.y + (rnd() - 0.5) * 1.4, o.z + (rnd() - 0.5) * 1.4).normalize();
+    t1.set(Math.abs(n.y) < 0.9 ? 0 : 1, Math.abs(n.y) < 0.9 ? 1 : 0, 0).cross(n).normalize(); t2.crossVectors(n, t1);
+    const h = spec.card * (0.8 + 0.4 * rnd()) / 2;
+    const rot = rnd() * Math.PI * 2, cs = Math.cos(rot) * h, sn = Math.sin(rot) * h;
+    const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, y]) => p.clone()
+      .addScaledVector(t1, x * cs - y * sn).addScaledVector(t2, x * sn + y * cs));
+    const bent = o.clone().multiplyScalar(0.7).addScaledVector(n, 0.3).normalize();
+    for (const [i0, i1, i2] of [[0, 1, 2], [0, 2, 3], [0, 2, 1], [0, 3, 2]]) {
+      for (const k of [i0, i1, i2]) {
+        pos.push(corners[k].x, corners[k].y, corners[k].z); nor.push(bent.x, bent.y, bent.z);
+        uv.push(k === 1 || k === 2 ? 1 : 0, k >= 2 ? 1 : 0);
+      }
+    }
+  }
+  const crown = new THREE.BufferGeometry();
+  crown.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  crown.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  crown.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  return { trunk: mergeGeoms(parts), crown };
 }
 function mergeGeoms(list0) {
   const list = list0.map((g) => (g.index ? g.toNonIndexed() : g));   // count after de-indexing
@@ -592,24 +717,23 @@ function distanceCull() {
   for (const e of cullList) e.obj.visible = e.c.distanceTo(camera.position) - e.r < e.max;
 }
 function buildTrees() {
-  const kinds = { plane: ['#4e6e2c', '#7a8c34'], camphor: ['#2f5226', '#58782e'], ginkgo: ['#7a8c30', '#a8a83a'] };
-  const bark = { plane: 0x8e8e78, camphor: 0x463c32, ginkgo: 0x5a5246 };
   // instanced per species and per 250 m cell, so off-screen and distant cells are skipped
   const CELL = 250;
   const groups = {};
   for (const t of world.trees) {
+    if (!TREE[t[3]]) continue;
     const key = `${t[3]}|${Math.floor(t[0] / CELL)}|${Math.floor(t[1] / CELL)}`;
     (groups[key] ||= []).push(t);
   }
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
+  const tint = new THREE.Color();
   const shared = {};
   for (const [key, list] of Object.entries(groups)) {
     const kind = key.split('|')[0];
     if (!shared[kind]) {
       const { trunk, crown } = treeGeometry(kind);
-      const lt = leafTexture(kinds[kind][0], kinds[kind][1], kind.length * 7); lt.repeat.set(2, 2);
-      shared[kind] = { trunk, crown, trunkMat: new THREE.MeshStandardMaterial({ color: bark[kind], roughness: 0.9 }),
-        crownMat: new THREE.MeshStandardMaterial({ map: lt, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.75 }) };
+      shared[kind] = { trunk, crown, trunkMat: new THREE.MeshStandardMaterial({ map: barkTexture(kind), roughness: 0.92 }),
+        crownMat: new THREE.MeshStandardMaterial({ map: leafCardTexture(kind), alphaTest: 0.45, roughness: 0.72 }) };
     }
     const sh = shared[kind];
     const trunkM = new THREE.InstancedMesh(sh.trunk, sh.trunkMat, list.length);
@@ -617,6 +741,9 @@ function buildTrees() {
     list.forEach((t, i) => {
       p.copy(B(t[0], t[1], t[2])); q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t[5]); s.setScalar(t[4]);
       m4.compose(p, q, s); trunkM.setMatrixAt(i, m4); crownM.setMatrixAt(i, m4);
+      // no two crowns quite the same shade
+      const h = hash(Math.round(t[0] * 10), Math.round(t[1] * 10), 5);
+      tint.setRGB(0.84 + 0.26 * h, 0.88 + 0.18 * h, 0.86 + 0.1 * (1 - h)); crownM.setColorAt(i, tint);
     });
     for (const m of [trunkM, crownM]) {
       m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix();
@@ -633,7 +760,7 @@ function buildLamps() {
   const pole = new THREE.CylinderGeometry(0.08, 0.14, 1, 8); pole.translate(0, 0.5, 0);
   const globe = new THREE.SphereGeometry(0.28, 12, 8);
   const types = { bund: 7.6, promenade: 4.3, street: 8.4 };
-  const metal = new THREE.MeshStandardMaterial({ color: 0x242826, roughness: 0.45, metalness: 0.3 });
+  const metal = reflective(new THREE.MeshStandardMaterial({ color: 0x242826, roughness: 0.45, metalness: 0.3 }));
   const glass = new THREE.MeshStandardMaterial({ color: 0xf5f0e1, emissive: 0x332a1a, roughness: 0.3 });
   const poles = new THREE.InstancedMesh(pole, metal, world.lamps.length);
   const globes = new THREE.InstancedMesh(globe, glass, world.lamps.length);
@@ -648,7 +775,7 @@ function buildLamps() {
   const sp = new THREE.CylinderGeometry(0.13, 0.16, 6.8, 8); sp.translate(0, 3.4, 0);
   const arm = new THREE.BoxGeometry(1, 0.14, 0.14); arm.translate(0.5, 6.25, 0);
   const head = new THREE.BoxGeometry(0.3, 1.0, 0.4); head.translate(0, 5.65, 0);
-  const grey = new THREE.MeshStandardMaterial({ color: 0x82868a, metalness: 0.6, roughness: 0.35 });
+  const grey = reflective(new THREE.MeshStandardMaterial({ color: 0x82868a, metalness: 0.6, roughness: 0.35 }));
   const black = new THREE.MeshStandardMaterial({ color: 0x151515, emissive: 0x200000, roughness: 0.5 });
   const n = world.signals.length;
   const P = new THREE.InstancedMesh(sp, grey, n), A = new THREE.InstancedMesh(arm, grey, n), H = new THREE.InstancedMesh(head, black, n * 2);
@@ -685,7 +812,7 @@ function buildFerry() {
   const hull = new THREE.MeshStandardMaterial({ color: 0x2c4a6e, roughness: 0.5 });
   const red = new THREE.MeshStandardMaterial({ color: 0x9c2a22, roughness: 0.6 });
   const deckM = new THREE.MeshStandardMaterial({ color: 0x6e6a60, roughness: 0.9 });
-  const glass = new THREE.MeshStandardMaterial({ color: 0x223344, roughness: 0.1, metalness: 0.4 });
+  const glass = reflective(new THREE.MeshStandardMaterial({ color: 0x223344, roughness: 0.1, metalness: 0.4 }));
   // double-ended river ferry ~38 m x 10 m (x = along the route)
   const hullShape = new THREE.Shape();
   hullShape.moveTo(-19, -3.2); hullShape.lineTo(19, -3.2); hullShape.quadraticCurveTo(21.5, 0, 19, 3.2);
@@ -700,7 +827,7 @@ function buildFerry() {
   const top = new THREE.Mesh(new THREE.BoxGeometry(6, 2.0, 4.6), white); top.position.y = 4.7; g.add(top);
   const tw = new THREE.Mesh(new THREE.BoxGeometry(6.1, 0.7, 4.7), glass); tw.position.y = 5.0; g.add(tw);
   const funnel = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 2.2, 10), red); funnel.position.set(0, 6.6, 0); g.add(funnel);
-  const railM = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.5, roughness: 0.3 });
+  const railM = reflective(new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.5, roughness: 0.3 }));
   for (const zz of [-4.75, 4.75]) { const r = new THREE.Mesh(new THREE.BoxGeometry(38, 0.06, 0.06), railM); r.position.set(0, 2.1, zz); g.add(r); }
   for (let k = -18; k <= 18; k += 2) for (const zz of [-4.75, 4.75]) {
     const p = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.1, 0.05), railM); p.position.set(k, 1.6, zz); g.add(p);
@@ -958,11 +1085,21 @@ function drawMinimap() {
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, W);
     ctx.drawImage(mapBase, 0, 0, W, W);
     ctx.font = '600 20px "Noto Sans SC", sans-serif'; ctx.textBaseline = 'middle';
+    // the places sit close together along the river: each label takes the first
+    // free spot right, left, above or below its dot (or further down the right side)
+    const taken = [];
     for (const t of world.teleports) {
       const tx = (t.pos[0] - MAP.x0) * S * k, ty = (mapBase.height - (t.pos[1] - MAP.y0) * S) * k;
       ctx.fillStyle = '#d8b46a'; ctx.beginPath(); ctx.arc(tx, ty, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(14,20,22,0.85)'; ctx.strokeText(t.name, tx + 9, ty);
-      ctx.fillStyle = '#f3ede1'; ctx.fillText(t.name, tx + 9, ty);
+      const w = ctx.measureText(t.name).width;
+      const spots = [[tx + 9, ty], [tx - 9 - w, ty], [tx - w / 2, ty - 20], [tx - w / 2, ty + 20],
+        [tx + 9, ty + 22], [tx + 9, ty - 22], [tx + 9, ty + 44], [tx + 9, ty - 44]];
+      const free = spots.find(([x, y]) => x > 2 && x + w < W - 2 &&
+        !taken.some((b) => x < b[2] && x + w > b[0] && y - 12 < b[3] && y + 12 > b[1]));
+      if (!free) continue;
+      taken.push([free[0] - 4, free[1] - 12, free[0] + w + 4, free[1] + 12]);
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(14,20,22,0.85)'; ctx.strokeText(t.name, free[0], free[1]);
+      ctx.fillStyle = '#f3ede1'; ctx.fillText(t.name, free[0], free[1]);
     }
     if (ferry.group) {
       const fx = (ferry.group.position.x - MAP.x0) * S * k, fy = (mapBase.height - ((-ferry.group.position.z) - MAP.y0) * S) * k;
@@ -1046,15 +1183,18 @@ function requestLock() {
   if (matchMedia('(pointer: coarse)').matches) return;
   try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch { /* optional */ }
 }
-let lockedAt = 0;
+let lockedAt = 0, skipMoves = 0;
 document.addEventListener('pointerlockchange', () => {
   locked = document.pointerLockElement === canvas;
-  if (locked) lockedAt = performance.now();
+  // Chrome follows the lock with one mousemove that undoes the cursor's last move
+  // (hundreds of pixels); on a slow first frame it arrives after the 250 ms window
+  if (locked) { lockedAt = performance.now(); skipMoves = 1; }
   if (!locked && running && $('tp').hidden && !bigMap() && !matchMedia('(pointer: coarse)').matches) showPause();
 });
 function showPause() { $('intro').hidden = false; $('start').textContent = '继续漫游'; $('hud').hidden = true; running = false; }
 document.addEventListener('mousemove', (e) => {
-  if (!locked || performance.now() - lockedAt < 250) return;
+  if (!locked || bigMap()) return;
+  if (skipMoves > 0 || performance.now() - lockedAt < 250) { skipMoves = 0; return; }
   player.yaw -= e.movementX * 0.0022; player.pitch -= e.movementY * 0.0022;
   player.pitch = THREE.MathUtils.clamp(player.pitch, -1.45, 1.45);
 });
