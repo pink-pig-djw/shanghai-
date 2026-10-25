@@ -474,6 +474,8 @@ async function load() {
     });
     scene.add(gltf.scene);
     gltf.scene.updateMatrixWorld(true);
+    // benches, bins and flower beds (300 m cells) are only drawn within 450 m
+    if (key === 'furniture') gltf.scene.traverse((o) => { if (o.isMesh) addCull(o, 450); });
     done.set(key, gltf.scene);
   }
   status('生成水面、树木、路灯与轮渡…');
@@ -505,15 +507,18 @@ function buildWater() {
   const mat = new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.07, metalness: 0.0, normalMap: waterNormal,
     normalScale: new THREE.Vector2(0.85, 0.85), envMapIntensity: 1.0 });
   const z = world.levels.water;
+  const parts = [];
   for (const p of world.water) {
     const sh = new THREE.Shape(p.ext.map(([x, y]) => new THREE.Vector2(x, y)));
     for (const h of p.holes || []) sh.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
     const g = new THREE.ShapeGeometry(sh);
-    g.rotateX(-Math.PI / 2);
     // ShapeGeometry is in XY; after rotateX(-90) y -> -z, which matches Blender y -> three -z
-    const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i), uv.getY(i));
-    const m = new THREE.Mesh(g, mat); m.position.y = z; m.receiveShadow = true; scene.add(m);
+    g.rotateX(-Math.PI / 2);
+    parts.push(g);
   }
+  // one mesh for all the river polygons: one draw call
+  const m = new THREE.Mesh(mergeGeoms(parts), mat); m.position.y = z; m.receiveShadow = true;
+  m.matrixAutoUpdate = false; m.updateMatrix(); scene.add(m);
   // wide river beyond the detailed area (context ring has its own water)
   const bed = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.1, normalMap: waterNormal }));
   bed.rotation.x = -Math.PI / 2; bed.position.y = z - 0.05; scene.add(bed);
@@ -566,24 +571,48 @@ function mergeGeoms(list) {
   out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   return out;
 }
+// Distance culling: small things (trees, street furniture) are hidden beyond a range
+// where they would be a few pixels in the haze anyway. Checked a few times a second.
+const cullList = [];
+function addCull(obj, maxDist) {
+  const sphere = obj.isInstancedMesh ? obj.boundingSphere : (obj.geometry.boundingSphere || (obj.geometry.computeBoundingSphere(), obj.geometry.boundingSphere));
+  const c = sphere.center.clone().applyMatrix4(obj.matrixWorld);
+  cullList.push({ obj, c, r: sphere.radius, max: maxDist });
+}
+function distanceCull() {
+  for (const e of cullList) e.obj.visible = e.c.distanceTo(camera.position) - e.r < e.max;
+}
 function buildTrees() {
   const kinds = { plane: ['#4e6e2c', '#7a8c34'], camphor: ['#2f5226', '#58782e'], ginkgo: ['#7a8c30', '#a8a83a'] };
   const bark = { plane: 0x8e8e78, camphor: 0x463c32, ginkgo: 0x5a5246 };
-  const byKind = {};
-  for (const t of world.trees) (byKind[t[3]] ||= []).push(t);
+  // instanced per species and per 250 m cell, so off-screen and distant cells are skipped
+  const CELL = 250;
+  const groups = {};
+  for (const t of world.trees) {
+    const key = `${t[3]}|${Math.floor(t[0] / CELL)}|${Math.floor(t[1] / CELL)}`;
+    (groups[key] ||= []).push(t);
+  }
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
-  for (const [kind, list] of Object.entries(byKind)) {
-    const { trunk, crown } = treeGeometry(kind);
-    const lt = leafTexture(kinds[kind][0], kinds[kind][1], kind.length * 7); lt.repeat.set(2, 2);
-    const trunkM = new THREE.InstancedMesh(trunk, new THREE.MeshStandardMaterial({ color: bark[kind], roughness: 0.9 }), list.length);
-    const crownM = new THREE.InstancedMesh(crown, new THREE.MeshStandardMaterial({ map: lt, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.75 }), list.length);
+  const shared = {};
+  for (const [key, list] of Object.entries(groups)) {
+    const kind = key.split('|')[0];
+    if (!shared[kind]) {
+      const { trunk, crown } = treeGeometry(kind);
+      const lt = leafTexture(kinds[kind][0], kinds[kind][1], kind.length * 7); lt.repeat.set(2, 2);
+      shared[kind] = { trunk, crown, trunkMat: new THREE.MeshStandardMaterial({ color: bark[kind], roughness: 0.9 }),
+        crownMat: new THREE.MeshStandardMaterial({ map: lt, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.75 }) };
+    }
+    const sh = shared[kind];
+    const trunkM = new THREE.InstancedMesh(sh.trunk, sh.trunkMat, list.length);
+    const crownM = new THREE.InstancedMesh(sh.crown, sh.crownMat, list.length);
     list.forEach((t, i) => {
       p.copy(B(t[0], t[1], t[2])); q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t[5]); s.setScalar(t[4]);
       m4.compose(p, q, s); trunkM.setMatrixAt(i, m4); crownM.setMatrixAt(i, m4);
     });
     for (const m of [trunkM, crownM]) {
       m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix();
-      m.computeBoundingSphere(); scene.add(m);
+      m.computeBoundingSphere(); scene.add(m); m.updateMatrixWorld(true);
+      addCull(m, 1100);
     }
   }
 }
@@ -1070,7 +1099,7 @@ window.addEventListener('resize', () => {
 // ---------------------------------------------------------------------------
 // loop
 // ---------------------------------------------------------------------------
-let lastT = performance.now(), hudT = 0, mapT = 0, shadowT = 0;
+let lastT = performance.now(), hudT = 0, mapT = 0, shadowT = 0, cullT = 0;
 const TIME_SCALE = location.hash === '#fastferry' ? 25 : 1;   // debug: speed up the ferry
 const shadowAt = new THREE.Vector3(1e9, 0, 0);
 // frame-time statistics for the adaptive resolution (and the #stats overlay)
@@ -1124,7 +1153,8 @@ function frame() {
     camera.rotation.set(player.pitch, player.yaw, 0, 'YXZ');
     updateShadows(dt);
     if (waterNormal) waterNormal.offset.set(now * 0.000006, now * 0.000004);
-    hudT -= dt; mapT -= dt;
+    hudT -= dt; mapT -= dt; cullT -= dt;
+    if (cullT <= 0) { cullT = 0.3; distanceCull(); }
     if (running && hudT <= 0) { hudT = 0.25; updateHud(); }
     if (running && mapBase && mapT <= 0) { mapT = 0.1; drawMinimap(); }
     adaptResolution(dt);

@@ -369,7 +369,12 @@ def build_all(sc, mats, root, web=False):
                 U.add_obj(f"furn_{key}_{i}", mb.build(f"furn_{key}_{i}", mats), c)
                 srcs[key].append(c)
         U.hide_collection(lib)
-    merged = U.MeshBuilder()
+    # web: one merged mesh per 300 m cell, so the browser can cull distant furniture
+    cells = {}
+
+    def cell_mb(x, y):
+        return cells.setdefault((int(math.floor(x / 300.0)), int(math.floor(y / 300.0))), U.MeshBuilder())
+
     counts = {}
 
     def put(key, x, y, z, h, variant=None):
@@ -378,6 +383,7 @@ def build_all(sc, mats, root, web=False):
         counts[key] = counts.get(key, 0) + 1
         if web:
             proto = lst[i % len(lst)]
+            merged = cell_mb(x, y)
             c, s = math.cos(h), math.sin(h)
             off = len(merged.v)
             merged.v.extend((x + px * c - py * s, y + px * s + py * c, z + pz) for px, py, pz in proto.v)
@@ -597,13 +603,14 @@ def build_all(sc, mats, root, web=False):
                 stp = steps_block(w, n=3 if b.get("landmark") else 2)
                 h = ang + math.pi / 2                                       # local -y -> outward
                 if web:
-                    merged.extend(_transformed(stp, mx, my, zp, h))
+                    cell_mb(mx, my).extend(_transformed(stp, mx, my, zp, h))
                 else:
                     U.add_obj(f"Entrance_Steps_{n_steps}", stp.build(f"steps_{n_steps}", mats), col,
                               loc=(mx, my, zp)).rotation_euler = (0, 0, h)
                 n_steps += 1
-    if web and len(merged):
-        U.add_obj("Street_Furniture_Merged", merged.build("street_furniture", mats), col)
+    for (cx, cy), mb in cells.items():
+        if len(mb):
+            U.add_obj(f"Street_Furniture_{cx}_{cy}", mb.build(f"street_furniture_{cx}_{cy}", mats), col)
     print(f"[furniture] {counts}, entrance steps {n_steps}")
 
 

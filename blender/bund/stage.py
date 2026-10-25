@@ -196,7 +196,7 @@ def camera_specs(sc):
         "CAM_12_From_Pudong_Wide": ((345, -120, 40), (-170, 160, 12), 26),
         # eye level on the riverside plaza opposite HSBC: flower bed and benches, the
         # Bund road with its hedge median, HSBC and the Customs House behind
-        "CAM_13_Plaza_Flowerbeds": ((-112, -86, 1.7), (-220, -78, 14), 28),
+        "CAM_13_Plaza_Flowerbeds": ((-121, -84.5, 1.6), (-210, -79, 8.5), 28),
     }
 
 
