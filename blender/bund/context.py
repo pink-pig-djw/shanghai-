@@ -80,10 +80,10 @@ def build_all(mats, root, path=None):
 
 
 def _far_ring(far, mats, col, rnd):
-    """Horizon: a procedural city carpet to 40 km (it fades into the haze), the
+    """Horizon: a procedural city carpet to 80 km (it fades into the haze), the
     real high-rises and the real river beyond the context ring."""
     mb = U.MeshBuilder()
-    R = 40000.0
+    R = 80000.0
     U.fill(mb, [(-R, -R), (R, -R), (R, R), (-R, R)], [], -2.5, "far_city")
     for p in far.get("water", []):
         U.fill(mb, p["ext"], p.get("holes", []), -2.3, "water_huangpu")

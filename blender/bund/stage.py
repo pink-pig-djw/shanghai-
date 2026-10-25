@@ -139,8 +139,10 @@ def _haze_volume(density=0.00011, radius=30000.0, top=700.0, n=128):
         out = nt.nodes.new("ShaderNodeOutputMaterial")
         vol = nt.nodes.new("ShaderNodeVolumePrincipled")
         vol.inputs["Density"].default_value = density
-        vol.inputs["Color"].default_value = (0.80, 0.86, 0.95, 1)
-        vol.inputs["Anisotropy"].default_value = 0.45
+        # city haze: near-neutral, mildly forward scattering (a strongly forward
+        # phase makes the far haze look dark away from the sun)
+        vol.inputs["Color"].default_value = (0.86, 0.88, 0.92, 1)
+        vol.inputs["Anisotropy"].default_value = 0.3
         nt.links.new(vol.outputs[0], out.inputs["Volume"])
         me.materials.append(m)
         ob.visible_shadow = True
@@ -202,7 +204,9 @@ def cameras(sc):
         cd = bpy.data.cameras.new(name)
         cd.lens = lens
         cd.clip_start = 0.3
-        cd.clip_end = 12000
+        # the horizon ring reaches 80 km; a nearer clip would show the dark
+        # below-horizon sky as a band along the skyline
+        cd.clip_end = 100000
         cd.sensor_width = 36
         ob = bpy.data.objects.new(name, cd)
         cc.objects.link(ob)
@@ -253,13 +257,18 @@ def render_settings(samples=128, res=(1920, 1080)):
     sc.render.image_settings.file_format = "PNG"
     sc.render.film_transparent = False
     vs = sc.view_settings
-    vs.view_transform = "AgX" if "AgX" in [e.identifier for e in vs.bl_rna.properties["view_transform"].enum_items] else "Filmic"
-    looks = [e.identifier for e in vs.bl_rna.properties["look"].enum_items]
+    try:
+        vs.view_transform = "AgX"           # Blender 4.0+
+    except TypeError:
+        vs.view_transform = "Filmic"
+    # looks are a dynamic enum (bl_rna lists only 'None'), so just try the names
     for lk in ("AgX - Medium High Contrast", "Medium High Contrast", "AgX - Base Contrast"):
-        if lk in looks:
+        try:
             vs.look = lk
             break
-    vs.exposure = 0.0
+        except TypeError:
+            continue
+    vs.exposure = -0.25    # keeps sunlit stone in the mid-tones, so facades keep their colour
     sc.unit_settings.system = "METRIC"
 
 

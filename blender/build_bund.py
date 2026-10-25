@@ -100,6 +100,10 @@ def main():
         from bund import props
         props.build_all(sc, mats, root)
         print(f"[bund] props done ({time.time() - t0:.1f}s)")
+    if want("furniture") and not a.quick:
+        from bund import furniture
+        furniture.build_all(sc, mats, root)
+        print(f"[bund] furniture done ({time.time() - t0:.1f}s)")
 
     stage.world(haze=not a.no_haze)
     cams = stage.cameras(sc)

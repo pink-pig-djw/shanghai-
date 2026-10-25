@@ -214,22 +214,6 @@ def build_all(sc, mats, root):
             U.lathe(mb, (x, y, 0.0), [(0.36, 0.0), (0.36, 0.016)], 16, "metal_black", smooth=False)
     if len(mb):
         U.add_obj("Bollards_Manholes", mb.build("bollards", mats), col)
-    # benches along the promenade
-    rnd = random.Random(3)
-    n = 0
-    for e in sc.get("water_edges", []):
-        if e["style"] != "bund":
-            continue
-        pts = e["pts"]
-        L = U.polyline_length(pts)
-        for k in range(int(L // 30)):
-            p, hd = U.point_along(pts, (k + 0.3) * 30)
-            for d in (4.5, -4.5):
-                x, y = p[0] - math.sin(hd) * d, p[1] + math.cos(hd) * d
-                if any(U.in_poly(x, y, dp) for dp in sc.get("deck", [])):
-                    U.add_instance(f"bench_{n}", srcs["bench"], col, (x, y, sc["levels"]["deck"]), hd)
-                    n += 1
-                    break
     # statues
     mb = U.MeshBuilder()
     st = _statue_chen_yi()
@@ -243,7 +227,7 @@ def build_all(sc, mats, root):
             ob.location = (p["pos"][0], p["pos"][1], sc["levels"]["pave"])
             # in profile against the Pudong skyline in most photos: head to the south (approximate)
             ob.rotation_euler = (0, 0, math.radians(265))
-    print(f"[props] lamps {len(sc.get('lamps', []))}, signals {len(sc.get('signals', []))}, benches {n}")
+    print(f"[props] lamps {len(sc.get('lamps', []))}, signals {len(sc.get('signals', []))}")
 
 
 def _plaza_point(sc, y):

@@ -11,7 +11,7 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
-const ASSETS = ['ground', 'bridges', 'landmarks', 'buildings_core', 'buildings_back', 'lujiazui', 'context'];
+const ASSETS = ['ground', 'bridges', 'landmarks', 'buildings_core', 'buildings_back', 'lujiazui', 'furniture', 'context'];
 const WALKABLE = new Set(['ground', 'bridges']);
 const SUN = { elevation: 19, azimuth: 114 };      // golden early-morning light, as in the Blender renders
 const EYE = 1.65, RADIUS = 0.32, STEP = 0.6, WALK = 1.6, RUN = 4.2, FLY = 30;
@@ -238,6 +238,13 @@ const MATDEF = {
   sign_red: ['flat', '#961919', 0.4], sign_gold: ['metal', '#be9646', 0.8, 0.3], sign_black: ['flat', '#161618', 0.35],
   sign_green: ['flat', '#195a3c', 0.4], sign_cream: ['flat', '#dccdaa', 0.5], awning_red: ['flat', '#821e1c', 0.8],
   awning_green: ['flat', '#1e4632', 0.8], rubber: ['flat', '#191919', 0.9],
+  flower_yellow: ['flowers', '#e2b21e', '#4a6a2a'], flower_white: ['flowers', '#e8e4d6', '#4a6a2a'],
+  flower_purple: ['flowers', '#962e78', '#4a6a2a'], flower_pink: ['flowers', '#de78a0', '#4a6a2a'],
+  flower_orange: ['flowers', '#e87e16', '#4a6a2a'], flower_red: ['flowers', '#c41c1a', '#4a6a2a'],
+  leaf_flowerbed: ['grass', '#38582a'], bin_blue: ['flat', '#1e50a0', 0.45], bin_black: ['flat', '#222224', 0.45],
+  bin_brown: ['flat', '#6e4226', 0.5], bin_red: ['flat', '#b01e1e', 0.45], post_green: ['metal', '#00683e', 0.2, 0.4],
+  hydrant_red: ['metal', '#b01a16', 0.2, 0.45], cabinet_grey: ['metal', '#b0b2ac', 0.3, 0.5], sign_brown: ['flat', '#643c26', 0.5],
+  far_city: ['noise', '#6e6a64', 0.3],
 };
 
 const matCache = new Map();
@@ -300,6 +307,15 @@ function makeMaterial(name) {
       const t = T(() => texTiles(def[1], def[2], { size: def[3], tw: def[4], th: def[5] }), def[3]);
       const n = normalFrom(t, 2); n.repeat.copy(t.repeat);
       m = new THREE.MeshStandardMaterial({ map: t, normalMap: n, roughness: 0.75 }); break;
+    }
+    case 'flowers': {
+      const t = T(() => paint(128, 128, (u, v) => {
+        const n = fbm(u * 24, v * 24, 31, 24, 3);
+        const c = n > 0.47 ? hex(def[1]) : mixc(hex(def[2]), hex(def[1]), Math.max(0, n - 0.3));
+        return [c[0], c[1], c[2], 255, n];
+      }), 0.6);
+      const n = normalFrom(t, 4); n.repeat.copy(t.repeat);
+      m = new THREE.MeshStandardMaterial({ map: t, normalMap: n, roughness: 0.8 }); break;
     }
     case 'grass': {
       const t = T(() => texNoise(def[1], { varr: 0.35, fine: 0.25, dark: [10, 20, 5], seed: 13 }), 3);

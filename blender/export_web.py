@@ -23,7 +23,7 @@ sys.path.insert(0, HERE)
 import bpy  # noqa: E402
 
 from bund import util as U  # noqa: E402
-from bund import materials, ground, facade, landmarks, bridge, backdrop, context  # noqa: E402
+from bund import materials, ground, facade, landmarks, bridge, backdrop, context, furniture  # noqa: E402
 
 OUT = os.path.join(ROOT, "web", "assets")
 
@@ -162,6 +162,7 @@ def main():
     bridge.build_all(sc, mats, root)
     backdrop.build_all(sc, mats, root)
     context.build_all(mats, root)
+    furniture.build_all(sc, mats, root, web=True)
     window_variants(mats)
     print(f"[web] scene built ({time.time() - t0:.0f}s)")
     # the browser draws its own water and riverbed; its fog hides the horizon ring
@@ -177,6 +178,7 @@ def main():
         "bridges": "Bridges_Viaducts",
         "lujiazui": "Backdrop_Lujiazui_Pudong",
         "context": "Context_City_Ring",
+        "furniture": "Street_Furniture_Flowers",
     }
     sizes = {}
     manifest = {"files": {}}
