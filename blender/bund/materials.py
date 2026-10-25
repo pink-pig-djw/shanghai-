@@ -564,8 +564,17 @@ def punched_facade(name, palette, glass=(40, 48, 55), bay=3.2, win_w=1.7, floor=
     gl = nb.mix(nb.math("GREATER_THAN", wr, 0.9), gl, lin((150, 132, 100)))   # curtains / lit rooms
     glazing = nb.math("MAXIMUM", win, shop)
     col = nb.mix(glazing, wcol, gl)
+    # split-AC condensers beside the windows of homes and offices (most buildings)
+    ac_u = nb.math("MULTIPLY", nb.math("GREATER_THAN", fu, 0.78), nb.math("LESS_THAN", fu, 0.96))
+    ac_v = nb.math("MULTIPLY", nb.math("GREATER_THAN", fv, s0 * 0.25), nb.math("LESS_THAN", fv, s0 * 0.25 + 0.17))
+    ac = nb.math("MULTIPLY", nb.math("MULTIPLY", ac_u, ac_v), nb.math("GREATER_THAN", vv, 0.0))
+    ac = nb.math("MULTIPLY", ac, nb.math("LESS_THAN", nb.math("FRACT", nb.math("MULTIPLY", wr, 3.7)), 0.55))
+    ac = nb.math("MULTIPLY", ac, nb.math("GREATER_THAN", b3, 0.25))
+    col = nb.mix(ac, col, nb.mix(nb.math("MULTIPLY", wr, 0.5), lin((196, 196, 190)), lin((150, 150, 146))))
+    glazing = nb.math("MAXIMUM", glazing, nb.math("MULTIPLY", ac, 0.0))
     rough = nb.mix(glazing, 0.82, 0.06)
-    nrm = nb.bump(nb.math("ADD", glazing, nb.math("MULTIPLY", bal, -0.6)), -0.5, 0.06)
+    nrm = nb.bump(nb.math("ADD", nb.math("ADD", glazing, nb.math("MULTIPLY", bal, -0.6)), nb.math("MULTIPLY", ac, -1.2)),
+                  -0.5, 0.06)
     nb.output(nb.bsdf(col, rough, normal=nrm, spec=nb.mix(glazing, 0.3, 0.75)))
     return m
 
@@ -575,30 +584,53 @@ def punched_facade(name, palette, glass=(40, 48, 55), bay=3.2, win_w=1.7, floor=
 # --------------------------------------------------------------------------
 
 def asphalt(name="asphalt", rgb=(52, 52, 54)):
+    """City asphalt: aggregate, large tone drift, rectangular repair patches,
+    sealed cracks, oil stains and polished (glossier) wheel paths."""
     m = new_mat(name)
     nb = NB(m)
     uv = nb.uv()
     base = lin(rgb)
     n1 = nb.noise(uv, 0.08, 4, 0.6)
-    col = nb.ramp(n1, [(0.35, mix_rgb(base, (0.0, 0.0, 0.0), 0.25)), (0.65, mix_rgb(base, (1, 1, 1), 0.08))])
+    col = nb.ramp(n1, [(0.35, mix_rgb(base, (0.0, 0.0, 0.0), 0.25)), (0.65, mix_rgb(base, (1, 1, 1), 0.1))])
     agg = nb.noise(uv, 180.0, 2, 0.5)
     col = nb.mix(nb.math("MULTIPLY", nb.math("GREATER_THAN", agg, 0.68), 0.5), col, mix_rgb(base, (1, 1, 1), 0.25))
-    patch = nb.noise(uv, 0.03, 2, 0.4)
-    col = nb.mix(nb.math("MULTIPLY", nb.math("GREATER_THAN", patch, 0.62), 0.5), col,
-                 mix_rgb(base, (0, 0, 0), 0.35))
-    nrm = nb.bump(nb.noise(uv, 90.0, 3, 0.6), 0.25, 0.004)
-    rough = nb.math("ADD", 0.82, nb.math("MULTIPLY", n1, 0.12))
+    # repair patches: blocky cells, some darker (fresh), some lighter (old)
+    cells = nb.voronoi(nb.vmath("MULTIPLY", uv, (1.0, 0.45, 1.0)), 0.16, "Color")
+    sepc = nb.n("ShaderNodeSeparateColor")
+    nb.link(cells, sepc.inputs[0])
+    pv = sepc.outputs[0]
+    fresh = nb.math("GREATER_THAN", pv, 0.9)
+    old = nb.math("LESS_THAN", pv, 0.08)
+    col = nb.mix(nb.math("MULTIPLY", fresh, 0.8), col, mix_rgb(base, (0, 0, 0), 0.45))
+    col = nb.mix(nb.math("MULTIPLY", old, 0.6), col, mix_rgb(base, (1, 1, 1), 0.18))
+    # sealed cracks: thin dark lines along cell edges of a coarser pattern
+    ck = nb.n("ShaderNodeTexVoronoi", feature="DISTANCE_TO_EDGE")
+    nb.set(ck, "Scale", 0.35)
+    nb.link(nb.vmath("ADD", uv, nb.vmath("SCALE", nb.noise(uv, 0.6, 3, 0.6, out="Color"), scale=0.8)), ck.inputs[0])
+    crack = nb.math("MULTIPLY", nb.math("LESS_THAN", nb.o(ck, "Distance"), 0.012),
+                    nb.math("GREATER_THAN", nb.noise(uv, 0.25, 2), 0.55))
+    col = nb.mix(nb.math("MULTIPLY", crack, 0.8), col, (0.012, 0.012, 0.012, 1))
+    stain = nb.math("GREATER_THAN", nb.noise(uv, 0.7, 3, 0.65), 0.7)
+    col = nb.mix(nb.math("MULTIPLY", stain, 0.4), col, mix_rgb(base, (0, 0, 0), 0.5))
+    nrm = nb.bump(nb.math("ADD", nb.noise(uv, 90.0, 3, 0.6), nb.math("MULTIPLY", crack, -1.5)), 0.3, 0.004)
+    rough = nb.math("ADD", 0.76, nb.math("MULTIPLY", n1, 0.16))
+    rough = nb.math("SUBTRACT", rough, nb.math("MULTIPLY", stain, 0.25))
     nb.output(nb.bsdf(col, rough, normal=nrm, spec=0.4))
     return m
 
 
 def paint(name, rgb):
+    """Road paint: thermoplastic with glass beads, worn through in patches and
+    dirtied by traffic."""
     m = new_mat(name)
     nb = NB(m)
     uv = nb.uv()
     base = lin(rgb)
     wear = nb.noise(uv, 1.5, 4, 0.6)
-    col = nb.mix(nb.math("MULTIPLY", nb.math("GREATER_THAN", wear, 0.6), 0.45), base, lin((80, 80, 80)))
+    col = nb.mix(nb.math("MULTIPLY", nb.math("GREATER_THAN", wear, 0.58), 0.55), base, lin((70, 70, 70)))
+    grit = nb.noise(uv, 40.0, 2)
+    col = nb.mix(nb.math("MULTIPLY", nb.math("GREATER_THAN", grit, 0.62), 0.6), col, lin((60, 60, 58)))
+    col = nb.mix(0.12, col, lin((120, 116, 104)))
     nrm = nb.bump(nb.noise(uv, 60.0, 2), 0.2, 0.003)
     nb.output(nb.bsdf(col, 0.55, normal=nrm, spec=0.5))
     return m
