@@ -388,14 +388,28 @@ async function fetchBuffer(url, onProgress) {
     if (done) break;
     chunks.push(value); got += value.length; onProgress(got, total);
   }
-  let buf = new Uint8Array(got); let o = 0;
+  const buf = new Uint8Array(got); let o = 0;
   for (const c of chunks) { buf.set(c, o); o += c.length; }
-  // gzip magic: decompress here unless the server already did (Content-Encoding: gzip)
-  if (buf[0] === 0x1f && buf[1] === 0x8b) {
-    const ds = new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip')));
-    buf = new Uint8Array(await ds.arrayBuffer());
+  return gunzip(buf);
+}
+// gzip magic: decompress here unless the server already did (Content-Encoding: gzip)
+async function gunzip(buf) {
+  if (buf[0] !== 0x1f || buf[1] !== 0x8b) return buf.buffer;
+  const ds = new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip')));
+  return ds.arrayBuffer();
+}
+// hosts that serve no binary files: the manifest lists the model as base64 text parts
+async function fetchParts(urls, onProgress) {
+  const texts = []; let got = 0;
+  for (const url of urls) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${url}: ${res.status}`);
+    const t = await res.text(); texts.push(t); got += t.length; onProgress(got);
   }
-  return buf.buffer;
+  const bin = atob(texts.join('').replace(/\s+/g, ''));
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return gunzip(buf);
 }
 
 // ---------------------------------------------------------------------------
@@ -530,11 +544,13 @@ async function load() {
   let base = 0;
   for (let i = 0; i < files.length; i++) {
     const key = files[i];
-    const url = `assets/${manifest.files?.[key]?.file || key + '.glb'}`;
+    const entry = manifest.files?.[key] || {};
     status(`下载模型 ${key}…`);
     let buf;
     try {
-      buf = await fetchBuffer(url, (got) => setProgress((base + Math.min(got, sizes[i])) / totalBytes * 0.9));
+      const progress = (got) => setProgress((base + Math.min(got, sizes[i])) / totalBytes * 0.9);
+      buf = entry.parts ? await fetchParts(entry.parts.map((p) => `assets/${p}`), progress)
+        : await fetchBuffer(`assets/${entry.file || key + '.glb'}`, progress);
     } catch (e) { console.warn('skip', key, e); base += sizes[i]; continue; }
     base += sizes[i];
     const gltf = await loader.parseAsync(buf, '');
