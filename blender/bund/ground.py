@@ -234,22 +234,22 @@ def _stair(mb, st, z_low, z_high):
     dz = rise / n
     ox, oy = x - math.cos(h) * run, y - math.sin(h) * run
     for k in range(n):
-        # step k: from distance k*tread to run, top at z_low + (k+1)*dz
-        U.box(mb, k * tread, -w / 2, z_low - 0.05, run + 0.05, w / 2, z_low + (k + 1) * dz,
-              "curb_granite", origin=(ox, oy, 0), h=h)
-    # cheek walls
+        # step k: one tread deep, top at z_low + (k+1)*dz; only the tread and the riser
+        # show (the cheek walls cover the sides), so no faces overlap or z-fight
+        U.box(mb, k * tread, -w / 2, z_low - 0.05, (k + 1) * tread + (0.05 if k == n - 1 else 0.0), w / 2,
+              z_low + (k + 1) * dz, "curb_granite", origin=(ox, oy, 0), h=h, faces=("+z", "-x"))
+    # cheek walls: closed, every face wound outwards (both sides alike)
     for s in (-1, 1):
-        yy = s * (w / 2 + 0.25)
-        cos_in = [(0, yy - 0.25, z_low), (run, yy - 0.25, z_low), (run, yy - 0.25, z_high + 0.55),
-                  (0, yy - 0.25, z_low + 0.55)]
-        cos_out = [(0, yy + 0.25, z_low), (run, yy + 0.25, z_low), (run, yy + 0.25, z_high + 0.55),
-                   (0, yy + 0.25, z_low + 0.55)]
-        cin = [U.xform(p, (ox, oy, 0), h) for p in cos_in]
-        cout = [U.xform(p, (ox, oy, 0), h) for p in cos_out]
-        mb.face(cin[::-1] if s > 0 else cin, "granite_light")
-        mb.face(cout if s > 0 else cout[::-1], "granite_light")
-        mb.face([cin[3], cin[2], cout[2], cout[3]] if s < 0 else [cout[3], cout[2], cin[2], cin[3]], "trim_light")
-        mb.face([cin[0], cin[3], cout[3], cout[0]] if s < 0 else [cout[0], cout[3], cin[3], cin[0]], "granite_light")
+        ya, yb = s * (w / 2 + 0.25) - 0.25, s * (w / 2 + 0.25) + 0.25
+        zl, zh = z_low + 0.55, z_high + 0.55
+        quads = (
+            ([(0, ya, z_low), (run, ya, z_low), (run, ya, zh), (0, ya, zl)], "granite_light"),      # -y side
+            ([(0, yb, zl), (run, yb, zh), (run, yb, z_low), (0, yb, z_low)], "granite_light"),      # +y side
+            ([(0, ya, zl), (run, ya, zh), (run, yb, zh), (0, yb, zl)], "trim_light"),               # sloped top
+            ([(0, ya, z_low), (0, ya, zl), (0, yb, zl), (0, yb, z_low)], "granite_light"),          # low end
+        )
+        for q, m in quads:
+            mb.face([U.xform(p, (ox, oy, 0), h) for p in q], m)
 
 
 ARROWS = {

@@ -2,19 +2,19 @@
  "files": {
   "ground": {
    "file": "ground.glb.gz",
-   "bytes": 2382064
+   "bytes": 2365957
   },
   "buildings_core": {
    "file": "buildings_core.glb.gz",
-   "bytes": 13272832
+   "bytes": 13254804
   },
   "buildings_back": {
    "file": "buildings_back.glb.gz",
-   "bytes": 1433932
+   "bytes": 1433114
   },
   "landmarks": {
    "file": "landmarks.glb.gz",
-   "bytes": 8569129
+   "bytes": 8560263
   },
   "bridges": {
    "file": "bridges.glb.gz",
@@ -30,7 +30,7 @@
   },
   "furniture": {
    "file": "furniture.glb.gz",
-   "bytes": 1671467
+   "bytes": 1758015
   }
  }
 }

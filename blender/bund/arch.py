@@ -117,16 +117,16 @@ def _arch_cell(mb, e, xa, xb, zs, ztop, d, mat_wall, mat_glass, mat_reveal, rnd,
     rp = [(xb, zs), (xb, ztop)] + [arc[k] for k in range(seg // 2, -1, -1)][:-1]
     rp = [(xb, zs), (xb, ztop)] + [arc[k] for k in range(seg // 2, 0, -1)]
     mb.face([e.P(s, z) for s, z in rp], mat_wall)
-    # reveal along the arc
+    # reveal along the arc, facing into the opening (the arc runs counter-clockwise
+    # in (s, z), so the soffit quads wind clockwise as seen from outside)
     for k in range(seg):
         s0, z0 = arc[k]
         s1, z1 = arc[k + 1]
-        mb.face([e.P(s1, z1), e.P(s0, z0), e.P(s0, z0, d), e.P(s1, z1, d)], mat_reveal)
-    # glass (fan)
-    vt = 1.0
+        mb.face([e.P(s0, z0), e.P(s1, z1), e.P(s1, z1, d), e.P(s0, z0, d)], mat_reveal)
+    # glass (fan): counter-clockwise in (s, z) faces outwards like the wall
     cos = [e.P(s, z, d) for s, z in arc]
     uvs = [((s - xa) / (xb - xa), 0.75 + 0.25 * (z - zs) / max(rz, 1e-3)) for s, z in arc]
-    mb.face(cos[::-1], mat_glass, uvs=uvs[::-1], attrs={"rnd": rnd.random()})
+    mb.face(cos, mat_glass, uvs=uvs, attrs={"rnd": rnd.random()})
 
 
 def surround(mb, e, s0, s1, zb, zt, mat, w=0.18, out=0.10, head="flat", arch=False, keystone=True,

@@ -17,6 +17,7 @@ Prototypes are generated once and instanced; with web=True everything is
 merged into plain meshes with flower masses instead of single blooms.
 """
 import math
+from collections import defaultdict
 import random
 import zlib
 
@@ -108,7 +109,7 @@ def flowerbed_round(seed, R=2.2, web=False):
                         ([(R * 0.72, 0.26), (R * 0.42, 0.29)], inner),
                         ([(R * 0.42, 0.29), (R * 0.2, 0.3), (0.0, 0.3)], c)):
             U.lathe(mb, (0, 0, z), prof, 24, m, smooth=True, cap_top=False)
-        U.sphere(mb, (0, 0, z + 0.65), 0.55, 12, 8, "hedge", z_min=-0.4)
+        U.sphere(mb, (0, 0, z + 0.65), 0.55, 14, 10, "hedge", z_min=-0.8)        # stands in the dome
         return mb
     rr = R - 0.32
     _plant_area(mb, rnd, _Disc(rr * 0.72, rr), math.pi * (rr ** 2 - (rr * 0.72) ** 2), outer, "pompom", z)
@@ -119,12 +120,12 @@ def flowerbed_round(seed, R=2.2, web=False):
     # clipped shrub in the middle
     for k in range(700):
         th = rnd.uniform(0, 2 * math.pi)
-        zc = rnd.uniform(-0.2, 1.0)
+        zc = rnd.uniform(-0.75, 1.0)
         q = math.sqrt(max(0.0, 1 - zc * zc))
         d = Vector((math.cos(th) * q, math.sin(th) * q, zc))
         p = Vector((d.x * 0.55, d.y * 0.55, z + 0.62 + d.z * 0.5))
         _leaf(mb, p, d, Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), 0.3)), 0.07, LEAF_OVATE, "hedge", rnd, 0.15)
-    U.sphere(mb, (0, 0, z + 0.62), 0.46, 10, 6, "hedge_inner", z_min=-0.5)
+    U.sphere(mb, (0, 0, z + 0.62), 0.46, 10, 6, "hedge_inner", z_min=-1.0)
     return mb
 
 
@@ -160,16 +161,16 @@ def planter_pot(seed, web=False):
     rnd = random.Random(seed)
     mb = U.MeshBuilder()
     U.lathe(mb, (0, 0, 0), [(0.42, 0.0), (0.5, 0.08), (0.62, 0.7), (0.66, 0.78), (0.58, 0.78), (0.56, 0.72)],
-            28, "granite_grey", smooth=True)
+            28, "concrete", smooth=True)
     U.fill(mb, [(math.cos(a) * 0.57, math.sin(a) * 0.57) for a in (2 * math.pi * k / 28 for k in range(28))], [],
            0.72, "soil")
     if web:
-        U.sphere(mb, (0, 0, 1.25), 0.55, 12, 8, "hedge", z_min=-0.6)
+        U.sphere(mb, (0, 0, 1.25), 0.55, 14, 10, "hedge", z_min=-0.96)      # bottom tucked into the soil
         return mb
-    U.sphere(mb, (0, 0, 1.25), 0.48, 10, 6, "hedge_inner", z_min=-0.6)
+    U.sphere(mb, (0, 0, 1.25), 0.48, 10, 6, "hedge_inner", z_min=-1.0)
     for _ in range(900):
         th = rnd.uniform(0, 2 * math.pi)
-        zc = rnd.uniform(-0.55, 1.0)
+        zc = rnd.uniform(-0.9, 1.0)
         q = math.sqrt(max(0.0, 1 - zc * zc))
         d = Vector((math.cos(th) * q, math.sin(th) * q, zc))
         p = Vector((d.x * 0.56, d.y * 0.56, 1.25 + d.z * 0.56))
@@ -286,9 +287,10 @@ def steps_block(width, n=3, rise=0.15, tread=0.36, mat="granite_grey"):
     """Entrance steps, building face along +y at y=0, steps descend towards -y."""
     mb = U.MeshBuilder()
     for k in range(n):
+        # one tread deep per block, tread and riser only: no overlapping boxes, no z-fighting
         y0 = -tread * (n - k)
         z1 = rise * (k + 1)
-        U.box(mb, -width / 2, y0, 0.0, width / 2, 0.0, z1, mat)
+        U.box(mb, -width / 2, y0, 0.0, width / 2, y0 + tread, z1, mat, faces=("+z", "-y"))
     # cheek blocks
     for x in (-width / 2 - 0.35, width / 2):
         U.box(mb, x, -tread * n, 0.0, x + 0.35, 0.0, rise * n + 0.1, "granite_light")
@@ -381,6 +383,8 @@ def build_all(sc, mats, root, web=False):
     counts = {}
 
     def put(key, x, y, z, h, variant=None):
+        if raised(x, y):
+            return
         lst = protos[key]
         i = variant if variant is not None else rnd.randrange(len(lst))
         counts[key] = counts.get(key, 0) + 1
@@ -424,6 +428,29 @@ def build_all(sc, mats, root, web=False):
 
     def open_ground(x, y):
         return not roads.find(x, y) and not greens.find(x, y) and not blds.find(x, y)
+
+    # raised planters, bridge decks and ramps stand above the street level the furniture
+    # is placed at: nothing goes into or under them
+    planters = _Polys(sc.get("planters", []))
+    lifts = defaultdict(list)                   # segments by 20 m cell of every point they reach
+    for r in sc.get("bridge_roads", []) + sc.get("ramps", []) + sc.get("viaducts", []):
+        hw = r.get("width", 8.0) / 2 + 1.5
+        for a, b in zip(r["pts"], r["pts"][1:]):
+            x0, x1 = sorted((a[0], b[0]))
+            y0, y1 = sorted((a[1], b[1]))
+            for gx in range(int((x0 - hw) // 20), int((x1 + hw) // 20) + 1):
+                for gy in range(int((y0 - hw) // 20), int((y1 + hw) // 20) + 1):
+                    lifts[(gx, gy)].append((a[:2], b[:2], hw))
+
+    def raised(x, y):
+        if planters.find(x, y):
+            return True
+        for (ax, ay), (bx, by), hw in lifts.get((int(x // 20), int(y // 20)), ()):
+            dx, dy = bx - ax, by - ay
+            t = max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy or 1.0)))
+            if math.hypot(x - ax - t * dx, y - ay - t * dy) < hw:
+                return True
+        return False
 
     # 1. Bund promenade (flood wall deck): benches facing the river, flower beds and
     #    planter pots along the inland side, bins in between

@@ -483,12 +483,19 @@ if (sky.material.uniforms.cloudCoverage) {        // fair weather: small, thin c
 // (its colour is the Blender lamp's, which is scene-linear: as an sRGB hex it came out twice as orange)
 const sun = new THREE.DirectionalLight(new THREE.Color().setRGB(1.0, 0.8, 0.6, THREE.LinearSRGBColorSpace), 3.5);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-// wide enough that the cached shadow map still covers the view after a few metres of walking
-Object.assign(sun.shadow.camera, { left: -150, right: 150, top: 150, bottom: -150, near: 1, far: 900 });
-sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
+// One shadow map over +-110 m around the player: 4096 texels (5.4 cm) where the GPU
+// takes big textures, else 2048. Its centre snaps to whole texels in light space (see
+// updateShadows), so re-centring it as the player walks leaves every shadow edge in place.
+// Small biases: shadows start at the foot of what casts them, nothing seems to hover.
+const SHADOW = { half: 110, size: renderer.capabilities.maxTextureSize >= 8192 ? 4096 : 2048 };
+sun.shadow.mapSize.set(SHADOW.size, SHADOW.size);
+Object.assign(sun.shadow.camera, { left: -SHADOW.half, right: SHADOW.half, top: SHADOW.half, bottom: -SHADOW.half, near: 1, far: 900 });
+sun.shadow.bias = -0.00006; sun.shadow.normalBias = 0.1;
+// the shadow camera's axes (Matrix4.lookAt from the sun towards its target, up = +y)
+const shadowX = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), sunDir).normalize();
+const shadowY = new THREE.Vector3().crossVectors(sunDir, shadowX);
 scene.add(sun, sun.target);
-const hemi = new THREE.HemisphereLight(0xb4c8e0, 0x6a6050, 0.8);   // sky above, sunlit paving below
+const hemi = new THREE.HemisphereLight(0xb4c8e0, 0x8c7c64, 0.8);   // sky above, light bounced off sunlit paving below
 scene.add(hemi);
 // The sky never changes: render the atmosphere shader once into a cube map for the
 // background and a prefiltered copy for reflections (glass, water, metal). It is not
@@ -1320,8 +1327,13 @@ function updateShadows(dt) {
   if (!renderer.shadowMap.enabled) return;
   shadowT -= dt;
   const ferryNear = ferry.group && ferry.phase === 'cruise' && ferry.group.position.distanceTo(camera.position) < 250;
-  if (camera.position.distanceTo(shadowAt) > 4 || (ferryNear && shadowT <= 0)) {
-    shadowAt.set(Math.round(camera.position.x / 2) * 2, camera.position.y, Math.round(camera.position.z / 2) * 2);
+  if (camera.position.distanceTo(shadowAt) > 3 || (ferryNear && shadowT <= 0)) {
+    // snap the centre to the texel grid in the light's view plane: the map moves by
+    // whole texels, so shadows do not swim or flicker when it is redrawn
+    const texel = 2 * SHADOW.half / SHADOW.size, snap = (v) => Math.round(v / texel) * texel;
+    const p = camera.position;
+    shadowAt.copy(shadowX).multiplyScalar(snap(p.dot(shadowX)))
+      .addScaledVector(shadowY, snap(p.dot(shadowY))).addScaledVector(sunDir, p.dot(sunDir));
     sun.position.copy(shadowAt).addScaledVector(sunDir, 400);
     sun.target.position.copy(shadowAt);
     sun.target.updateMatrixWorld();
