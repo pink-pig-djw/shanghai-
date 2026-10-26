@@ -103,9 +103,12 @@ def flowerbed_round(seed, R=2.2, web=False):
     c, inner, outer = FLOWER_SCHEMES[seed % len(FLOWER_SCHEMES)]
     z = H - 0.05
     if web:
-        U.lathe(mb, (0, 0, z), [(R - 0.3, 0.0), (R - 0.35, 0.22), (R * 0.55, 0.28), (R * 0.3, 0.3), (0.0, 0.3)],
-                24, outer, smooth=True)
-        U.sphere(mb, (0, 0, z + 0.65), 0.55, 10, 6, "hedge", z_min=-0.4)
+        # the same three rings of colour as the planted bed, as a low dome
+        for prof, m in (([(R - 0.3, 0.0), (R - 0.35, 0.22), (R * 0.72, 0.26)], outer),
+                        ([(R * 0.72, 0.26), (R * 0.42, 0.29)], inner),
+                        ([(R * 0.42, 0.29), (R * 0.2, 0.3), (0.0, 0.3)], c)):
+            U.lathe(mb, (0, 0, z), prof, 24, m, smooth=True, cap_top=False)
+        U.sphere(mb, (0, 0, z + 0.65), 0.55, 12, 8, "hedge", z_min=-0.4)
         return mb
     rr = R - 0.32
     _plant_area(mb, rnd, _Disc(rr * 0.72, rr), math.pi * (rr ** 2 - (rr * 0.72) ** 2), outer, "pompom", z)

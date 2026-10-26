@@ -1,0 +1,36 @@
+{
+ "files": {
+  "ground": {
+   "file": "ground.glb.gz",
+   "bytes": 2382064
+  },
+  "buildings_core": {
+   "file": "buildings_core.glb.gz",
+   "bytes": 13272832
+  },
+  "buildings_back": {
+   "file": "buildings_back.glb.gz",
+   "bytes": 1433932
+  },
+  "landmarks": {
+   "file": "landmarks.glb.gz",
+   "bytes": 8569129
+  },
+  "bridges": {
+   "file": "bridges.glb.gz",
+   "bytes": 540297
+  },
+  "lujiazui": {
+   "file": "lujiazui.glb.gz",
+   "bytes": 357652
+  },
+  "context": {
+   "file": "context.glb.gz",
+   "bytes": 9575112
+  },
+  "furniture": {
+   "file": "furniture.glb.gz",
+   "bytes": 1671467
+  }
+ }
+}

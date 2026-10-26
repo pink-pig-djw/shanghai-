@@ -197,6 +197,19 @@ function texPunched(wall, glass, { bay = 3.2, floor = 3.4, ww = 1.7, wh = 1.9, s
   });
 }
 
+function texLeafy(base, { seed = 15 } = {}) {
+  // clipped box and privet: small overlapping leaves, dark gaps, sunlit tips
+  const c0 = hex(base); const N = 256;
+  return paint(N, N, (u, v) => {
+    const n = fbm(u * 16, v * 16, seed, 16, 3), m = fbm(u * 48, v * 48, seed + 7, 48, 2);
+    const h = n * 0.6 + m * 0.4;
+    const cell = hash(Math.floor(u * 40), Math.floor(v * 40), seed);
+    let c = mixc(c0, [8, 14, 6], Math.max(0, 0.55 - h) * 1.6);
+    c = mixc(c, [150, 160, 90], Math.max(0, h - 0.6) * 0.9 + cell * 0.05);
+    return [c[0], c[1], c[2], 255, h];
+  });
+}
+
 // material library keyed by the Blender material name
 const MATDEF = {
   // weathered stone and render, matching the Blender palette (multiplied by the baked per-building colour)
@@ -224,10 +237,10 @@ const MATDEF = {
   facade_hist_dist: ['punched', '#b4aa96', '#283037', { bay: 3.8, ww: 1.5, wh: 2.4, floor: 4.0 }],
   asphalt: ['asphalt', '#343436'], asphalt_old: ['asphalt', '#403f3e'], paint_white: ['flat', '#ebebe6', 0.6],
   paint_yellow: ['flat', '#e6b428', 0.6], paving_sidewalk: ['tiles', '#96948e', '#88867f', 2.4, 0.6, 0.3],
-  paving_plaza: ['tiles', '#b2aca0', '#a09a8e', 4.0, 1.0, 0.5], paving_deck: ['tiles', '#a8a092', '#989184', 3.2, 0.8, 0.4],
+  paving_plaza: ['tiles', '#a8a296', '#979185', 4.0, 1.0, 0.5], paving_deck: ['tiles', '#9e968a', '#8f897c', 3.2, 0.8, 0.4],
   paving_red: ['tiles', '#8c5c4c', '#7a5040', 0.8, 0.2, 0.1], curb_granite: ['tiles', '#afaca5', '#a5a29b', 4.0, 1.0, 0.3],
-  grass: ['grass', '#4e7030'], grass_park: ['grass', '#46682c'], hedge: ['grass', '#325526'], soil: ['noise', '#46382a', 0.3],
-  lawn_base: ['grass', '#486a2c'], hedge_inner: ['grass', '#2c4422'],
+  grass: ['grass', '#4e7030'], grass_park: ['grass', '#46682c'], hedge: ['leafy', '#3c5e2a'], soil: ['noise', '#46382a', 0.3],
+  lawn_base: ['grass', '#486a2c'], hedge_inner: ['leafy', '#2c4422'],
   metal_dark: ['metal', '#242826', 0.3, 0.45], metal_black: ['metal', '#141416', 0.3, 0.4], metal_grey: ['metal', '#82868a', 0.6, 0.35],
   metal_green: ['metal', '#284637', 0.3, 0.45], steel_bridge: ['metal', '#808484', 0.35, 0.45], steel_stainless: ['metal', '#bec0c3', 1.0, 0.25],
   bronze: ['metal', '#6e5032', 1.0, 0.4], gold: ['metal', '#d2aa50', 1.0, 0.3], glass_clear: ['glass', '#c8d2d7'],
@@ -293,7 +306,7 @@ function makeMaterial(name) {
     case 'curtain': {
       const t = T(() => texCurtain(def[1], def[2], def[3]));
       t.repeat.set(1 / 3.0, 1 / 7.6);
-      m = reflective(new THREE.MeshStandardMaterial({ map: t, roughness: 0.12, metalness: 0.55 }), 1.3); break;
+      m = reflective(new THREE.MeshStandardMaterial({ map: t, roughness: 0.12, metalness: 0.55 }), 0.8); break;
     }
     case 'punched': {
       const o = def[3] || {};
@@ -319,12 +332,18 @@ function makeMaterial(name) {
       const n = normalFrom(t, 4); n.repeat.copy(t.repeat);
       m = new THREE.MeshStandardMaterial({ map: t, normalMap: n, roughness: 0.8 }); break;
     }
+    case 'leafy': {
+      const t = T(() => texLeafy(def[1]), 1.2);
+      const n = normalFrom(t, 5); n.repeat.copy(t.repeat);
+      m = new THREE.MeshStandardMaterial({ map: t, normalMap: n, roughness: 0.8 }); break;
+    }
     case 'grass': {
       const t = T(() => texNoise(def[1], { varr: 0.35, fine: 0.25, dark: [10, 20, 5], seed: 13 }), 3);
       m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.95 }); break;
     }
-    case 'metal': m = reflective(new THREE.MeshStandardMaterial({ color: def[1], metalness: def[2], roughness: def[3] })); break;
-    case 'glass': m = reflective(new THREE.MeshStandardMaterial({ color: def[1], metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.35 })); break;
+    // reflections show only the sky, not the streets around: keep them modest
+    case 'metal': m = reflective(new THREE.MeshStandardMaterial({ color: def[1], metalness: def[2], roughness: def[3] }), 0.6); break;
+    case 'glass': m = reflective(new THREE.MeshStandardMaterial({ color: def[1], metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.35 }), 0.8); break;
     case 'emit': m = new THREE.MeshStandardMaterial({ color: def[1], emissive: def[1], emissiveIntensity: def[2], roughness: 0.3 }); break;
     default: m = new THREE.MeshStandardMaterial({ color: def[1], roughness: def[2] ?? 0.6 });
   }
@@ -397,12 +416,12 @@ renderer.setPixelRatio(dpr);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.AgXToneMapping ?? THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.75;
+renderer.toneMappingExposure = 0.8;
 // AgX with a look like the renders' "Medium High Contrast": three.js ships AgX
 // without looks, which leaves sunlit stone milky and flat. As in Blender's OCIO
 // config the contrast pivots on middle grey in AgX's log encoding, before the
 // sigmoid; a little saturation goes on after it.
-const LOOK = { contrast: 1.25, saturation: 1.0 };
+const LOOK = { contrast: 1.3, saturation: 0.95 };
 {
   const src = THREE.ShaderChunk.tonemapping_pars_fragment;
   const i0 = src.indexOf('vec3 AgXToneMapping('), i1 = src.indexOf('vec3 NeutralToneMapping(');
@@ -426,7 +445,7 @@ MAX_ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene();
 // the fog hides everything beyond ~6 km, so a nearer far plane costs nothing visible
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.15, 6500);
-scene.fog = new THREE.FogExp2(0xc4c8c8, 0.00032);
+scene.fog = new THREE.FogExp2(0xc4c8c8, 0.0004);
 
 // sky + sun
 const sunDir = new THREE.Vector3();
@@ -437,8 +456,8 @@ const sunDir = new THREE.Vector3();
 const sky = new Sky(); sky.scale.setScalar(20000);
 sky.material.uniforms.turbidity.value = 7;           // Shanghai's hazy blue, not an alpine one
 sky.material.uniforms.rayleigh.value = 1.3;
-sky.material.uniforms.mieCoefficient.value = 0.005;
-sky.material.uniforms.mieDirectionalG.value = 0.8;
+sky.material.uniforms.mieCoefficient.value = 0.0025;
+sky.material.uniforms.mieDirectionalG.value = 0.75;
 sky.material.uniforms.sunPosition.value.copy(sunDir);
 if (sky.material.uniforms.cloudCoverage) {        // fair weather: small, thin clouds as in the renders
   Object.assign(sky.material.uniforms.cloudCoverage, { value: 0.2 });
@@ -448,14 +467,14 @@ if (sky.material.uniforms.cloudCoverage) {        // fair weather: small, thin c
 // Light as in the Blender scene: a strong, warm, low sun lamp is the key light and
 // the sky (strength 0.05 there) only a cool fill
 // (its colour is the Blender lamp's, which is scene-linear: as an sRGB hex it came out twice as orange)
-const sun = new THREE.DirectionalLight(new THREE.Color().setRGB(1.0, 0.8, 0.6, THREE.LinearSRGBColorSpace), 3.1);
+const sun = new THREE.DirectionalLight(new THREE.Color().setRGB(1.0, 0.8, 0.6, THREE.LinearSRGBColorSpace), 3.5);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 // wide enough that the cached shadow map still covers the view after a few metres of walking
 Object.assign(sun.shadow.camera, { left: -150, right: 150, top: 150, bottom: -150, near: 1, far: 900 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
-const hemi = new THREE.HemisphereLight(0xb4c8e0, 0x6a6050, 1.4);   // sky above, sunlit paving below
+const hemi = new THREE.HemisphereLight(0xb4c8e0, 0x6a6050, 0.8);   // sky above, sunlit paving below
 scene.add(hemi);
 // The sky never changes: render the atmosphere shader once into a cube map for the
 // background and a prefiltered copy for reflections (glass, water, metal). It is not
@@ -466,7 +485,7 @@ const SKY_LEVEL = 0.4;          // sky brightness relative to the sun, matched t
 // The renders look through a 30 km haze volume: a grey veil over the sky, thin
 // overhead and thick at the horizon (three's sky alone is an alpine deep blue with
 // a white horizon, which the river then mirrors)
-const VEIL = { color: [0.72, 0.72, 0.7], zenith: 0.35, horizon: 0.65 };
+const VEIL = { color: [0.7, 0.7, 0.68], zenith: 0.1, horizon: 0.68 };
 let ENV = null;
 {
   const skyScene = new THREE.Scene(); skyScene.add(sky);
@@ -475,7 +494,7 @@ let ENV = null;
     uniforms: { veil: { value: new THREE.Vector3(...VEIL.color) }, a0: { value: VEIL.zenith }, a1: { value: VEIL.horizon } },
     vertexShader: 'varying vec3 vDir;\nvoid main() { vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }',
     fragmentShader: 'uniform vec3 veil; uniform float a0, a1; varying vec3 vDir;\n'
-      + 'void main() { float y = max( normalize( vDir ).y, 0.0 ); gl_FragColor = vec4( veil, mix( a1, a0, pow( y, 0.6 ) ) ); }',
+      + 'void main() { float y = max( normalize( vDir ).y, 0.0 ); gl_FragColor = vec4( veil, mix( a1, a0, pow( y, 0.66 ) ) ); }',
   })));
   const cubeRT = new THREE.WebGLCubeRenderTarget(LOW ? 256 : 512, { type: THREE.HalfFloatType });
   new THREE.CubeCamera(1, 30000, cubeRT).update(renderer, skyScene);
@@ -555,17 +574,19 @@ async function load() {
 // ---------------------------------------------------------------------------
 let waterNormal;
 function buildWater() {
-  const N = 256;
+  // ripples: finer texels and gentler slopes than a sharp chop, so the low sun's
+  // glitter path shimmers instead of breaking into blocky texel-sized sparks
+  const N = 512;
   waterNormal = (() => {
     const t = paint(N, N, (u, v) => {
-      const h = fbm(u * 8, v * 8, 21, 8, 4) * 0.7 + fbm(u * 32, v * 32, 22, 32, 2) * 0.3;
+      const h = fbm(u * 8, v * 8, 21, 8, 4) * 0.75 + fbm(u * 24, v * 24, 22, 24, 2) * 0.25;
       return [0, 0, 0, 255, h];
     }, false);
-    const n = normalFrom(t, 5); n.repeat.set(1 / 18, 1 / 18); return n;
+    const n = normalFrom(t, 7); n.repeat.set(1 / 18, 1 / 18); return n;
   })();
   // silt-laden Huangpu water: khaki brown, choppy from the constant boat traffic
-  const mat = reflective(new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.1, metalness: 0.0, normalMap: waterNormal,
-    normalScale: new THREE.Vector2(0.85, 0.85) }), 0.6);
+  const mat = reflective(new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.14, metalness: 0.0, normalMap: waterNormal,
+    normalScale: new THREE.Vector2(0.6, 0.6) }), 0.42);
   const z = world.levels.water;
   const parts = [];
   for (const p of world.water) {
@@ -580,7 +601,7 @@ function buildWater() {
   const m = new THREE.Mesh(mergeGeoms(parts), mat); m.position.y = z; m.receiveShadow = true;
   m.matrixAutoUpdate = false; m.updateMatrix(); scene.add(m);
   // wide river beyond the detailed area (context ring has its own water)
-  const bed = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), reflective(new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.12, normalMap: waterNormal }), 0.6));
+  const bed = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), reflective(new THREE.MeshStandardMaterial({ color: 0x4a4534, roughness: 0.12, normalMap: waterNormal }), 0.42));
   bed.rotation.x = -Math.PI / 2; bed.position.y = z - 0.05; scene.add(bed);
 }
 
